@@ -16,4 +16,4 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "${modName.replaceAll("[^a-zA-Z]", "")}-${dependencies_catalog_version.replaceAll("-v\\d+", "")}"
+rootProject.name = "${mod_name.replaceAll("[^a-zA-Z]", "")}-${dependencies_catalog_version.replaceAll("-v\\d+", "")}"
