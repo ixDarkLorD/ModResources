@@ -234,8 +234,12 @@ subprojects {
         }
         repositories {
             maven {
-                name = "ModResources"
-                url "file://" + project.hasProperty("mod_resources") ? "${project.findProperty("mod_resources")}/maven" : null
+                name = project.mod_author + " Maven"
+                url = uri(maven_url)
+                credentials {
+                    username = project.findProperty("maven_user") ?: System.getenv("MAVEN_USER")
+                    password = project.findProperty("maven_password") ?: System.getenv("MAVEN_PASSWORD")
+                }
             }
         }
     }

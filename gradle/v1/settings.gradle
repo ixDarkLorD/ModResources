@@ -1,8 +1,8 @@
 dependencyResolutionManagement {
     repositories {
         maven {
-            name = "Mod Resources"
-            url = "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/maven/"
+            name = "ModResources"
+            url = "https://maven.pkg.github.com/ixDarkLorD/ModResources"
         }
     }
     versionCatalogs {
