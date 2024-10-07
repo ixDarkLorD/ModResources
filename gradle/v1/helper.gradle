@@ -1,0 +1,195 @@
+apply plugin: "com.hypherionmc.modutils.modpublisher"
+
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
+
+import groovy.json.JsonOutput
+
+import java.util.regex.Pattern
+
+tasks.register('buildInfo') {
+    onlyIf { !project_loaders.split(",").contains(project.name) }
+    doLast {
+        printf("""
+             |=============[Build Info]=============|
+              Project Name: %s
+              Version: %s
+             |======================================|
+             """, project.name, project.version)
+    }
+}
+
+tasks.register('incrementBuildNumber') {
+    onlyIf { project.hasProperty('copy_build_jar') && project.hasProperty('unique_build_number') }
+    doLast {
+        def propertiesName = 'gradle.properties'
+        // build number is stored in global gradle.properties
+        def propertiesFile = new File(project.gradle.gradleUserHomeDir, propertiesName)
+        if (!propertiesFile.canRead()) {
+            throw new FileNotFoundException("Could not read file ".concat(propertiesName))
+        }
+        def properties = new Properties()
+        properties.load(file(propertiesFile).newDataInputStream())
+        if (Boolean.parseBoolean(properties['separate_unique_build_numbers'])) {
+            propertiesFile = new File(getRootDir(), propertiesName)
+        }
+        def buildNumberMatcher = Pattern.compile("unique_build_number=(\\d+)").matcher(propertiesFile.getText())
+        buildNumberMatcher.find()
+        def versionCode = Integer.parseInt(buildNumberMatcher.group(1))
+        def propertiesContent = buildNumberMatcher.replaceAll("unique_build_number=" + ++versionCode)
+        propertiesFile.write(propertiesContent)
+    }
+}
+
+tasks.register('copyJarToDir', Copy) {
+    onlyIf { project.hasProperty('build_jar_output_dir') && project.hasProperty('unique_build_number') }
+    if (project.findProperty('copy_build_jar').toBoolean()) {
+        // shortcut for jar.outputs.files
+        from remapJar
+        into project.findProperty('build_jar_output_dir')
+        // add build number to be able to distinguish jars when testing thorough official launcher
+        // build number is stored in global gradle.properties
+        rename { fileName -> fileName.replace("v${mod_version}", "v${mod_version}-build.${unique_build_number}") }
+    }
+}
+
+tasks.register('refreshUpdateJson') {
+    onlyIf { project.loom.isForgeLike() && project.hasProperty('mod_resources') }
+    doLast {
+        def updateFile = file(project.findProperty('mod_resources').concat(File.separator).concat('updates').concat(File.separator).concat(project.name).concat(File.separator).concat("${modid}").concat('.json'))
+        def updateJson
+        if (updateFile.exists() && updateFile.canRead() && updateFile.length() != 0) {
+            updateJson = new JsonSlurper().parseText(updateFile.text)
+            "${project_game_versions}".replaceAll(" ", "").split(",").each { version ->
+                updateJson['promos']["${version}-latest"] = "${mod_version}"
+                // alpha and beta releases will contain 'a' or 'b' char respectively, don't update recommended for those
+                if ("${mod_version}".matches("[^a-zA-Z]+")) {
+                    updateJson['promos']["${version}-recommended"] = "${mod_version}"
+                }
+            }
+        } else {
+            updateFile.getParentFile().mkdirs()
+            def builder = new JsonBuilder()
+            updateJson = builder {
+                homepage "${mod_page_url}"
+                promos {
+                    "${project_game_versions}".replaceAll(" ", "").split(",").each { version ->
+                        "${version}-latest" "${mod_version}"
+                        // alpha and beta releases will contain 'a' or 'b' char respectively, don't update recommended for those
+                        if ("${mod_version}".matches("[^a-zA-Z]+")) {
+                            "${version}-recommended" "${mod_version}"
+                        }
+                    }
+                }
+            }
+        }
+        def output = new JsonOutput()
+        updateFile.write(output.prettyPrint(output.toJson(updateJson)))
+    }
+}
+
+publisher {
+    if (!project_loaders.contains(project.name))
+        return
+
+    if (!file("../CHANGELOG.md").canRead()) {
+        throw new FileNotFoundException("Could not read changelog file")
+    }
+
+    // Enable Debug mode. When enabled, no files will actually be uploaded
+    setDebug(true)
+
+    apiKeys {
+        if (!project_curse_id.isEmpty())
+            curseforge curseforge_api_token
+
+        if (!modrinth_api_token.isEmpty())
+            modrinth modrinth_api_token
+    }
+
+    setCurseID(project_curse_id)
+    setModrinthID(project_modrinth_id)
+    setVersionType(project_release_type)
+    setChangelog(file("../CHANGELOG.md"))
+
+    setProjectVersion("${mc_version}-${project.version}")
+    setDisplayName("[${project.hasProperty("platform_name") ? project.findProperty("platform_name") : uppercaseFirstChar(project.name)}] ${project_game_versions.split(',').join(" - ")} | v${mod_version} " + uppercaseString("${project_release_type}"))
+    setGameVersions(project_game_versions.split(','))
+    setLoaders(project.name)
+    setJavaVersions(project_java_version.split(','))
+    setCurseEnvironment(mod_fabric_environment == "*" ? "both" : mod_fabric_environment)
+    setIsManualRelease(false)
+    setArtifact(remapJar)
+
+    // Override the artifact uploaded to modrinth
+    // setPlatformArtifact(Platform.Modrinth, "build/libs/mymod.jar")
+    // setPlatformArtifact(Platform.Modrinth, jar.getArchiveFile().get())
+    // If this is a task, the task specified will be executed before publishing
+    // Valid platforms are modrinth, curseforge and github
+    // setPlatformArtifact("modrinth", modrinthJar)
+
+    // Disable the built in Fractureizer scanner
+    setDisableMalwareScanner(false)
+
+    // Safety check to check if the artifact contains a valid mod metadata entry,
+    // which could possibly mean that the jar is empty
+    setDisableEmptyJarCheck(true)
+
+    List<String> result = extractDependencies(project.properties.get(project.name + "_publish_dependencies") as String, project.name)
+
+    [curseDepends, modrinthDepends].each {
+        if (!result[0].isEmpty())
+            it.required result[0]
+        if (!result[1].isEmpty())
+            it.optional result[1]
+    }
+}
+
+ext.helper = [
+        getNextVersion: { string ->
+            return getNextVersion(string)
+        },
+        uppercaseFirstChar: { string ->
+            return uppercaseFirstChar(string)
+        },
+        loaderNames: { return loaderNames() }
+]
+
+List<String> loaderNames() {
+    return rootProject.subprojects.name.collect { it.toLowerCase() }.findAll { !it.contains("common") && !it.contains("test") }
+}
+
+static String getNextVersion(String ver) {
+    def versionMatcher = Pattern.compile("(\\d+\\.\\d+)").matcher(ver)
+    versionMatcher.find()
+    def currentVersion = versionMatcher.group(1)
+    return currentVersion.substring(0, currentVersion.indexOf(".") + 1).concat(String.valueOf(Integer.parseInt(currentVersion.substring(currentVersion.indexOf(".") + 1, currentVersion.size())) + 1))
+}
+
+static String uppercaseString(String str) {
+    return str.toUpperCase()
+}
+
+static String uppercaseFirstChar(String str) {
+    return str.substring(0, 1).toUpperCase() + str.substring(1)
+}
+
+static List<String> extractDependencies(String input, String projectName) {
+    if (input == null)
+        throw new IllegalStateException("There is no dependencies property for %s project".formatted(projectName))
+
+    def requirementMatch = input =~ /requirement\[(.*?)]/
+    def optionalMatch = input =~ /optional\[(.*?)]/
+
+    def requirement = requirementMatch ? requirementMatch[0][1] : ""
+    def optional = optionalMatch ? optionalMatch[0][1] : ""
+
+    def requirementElements = requirement.split(',').collect { it.trim() }
+    def optionalElements = optional.split(',').collect { it.trim() }
+
+    // Convert elements to strings explicitly
+    requirementElements = requirementElements.collect { it.toString() }
+    optionalElements = optionalElements.collect { it.toString() }
+
+    return [requirementElements, optionalElements] as List<String>
+}
