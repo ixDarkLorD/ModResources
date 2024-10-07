@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>net.ixdarklord</groupId>
+  <artifactId>sharedcatalogs</artifactId>
+  <version>1.21.1-v1</version>
+  <packaging>toml</packaging>
+  <name>SharedCatalogs</name>
+  <description># Shared Catalogs
+A maven that contains a list of libraries that will make implementing dependencies easier
+
+### Libraries Contents:
+* Minecraft
+* Loaders
+* Mods: JEI, Curios, ModMenu, etc</description>
+  <url>https://github.com/ixDarkLorD/ModResources</url>
+  <licenses>
+    <license>
+      <name>All Rights Reserved.</name>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>ixDarkLorD</id>
+      <name>Nawaf M.</name>
+      <email>nawaf.makbashi@gmail.com</email>
+    </developer>
+  </developers>
+</project>
