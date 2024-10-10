@@ -1,8 +1,8 @@
 plugins {
-    id "dev.architectury.loom" version '1.7-SNAPSHOT' apply false
-    id "architectury-plugin" version '3.4-SNAPSHOT' apply false
-    id "com.github.johnrengelman.shadow" version '8.1.1' apply false
-    id "com.hypherionmc.modutils.modpublisher" version '2.+' apply false
+    alias libs.plugins.architectury-loom apply false
+    alias libs.plugins.architectury-plugin apply false
+    alias libs.plugins.shadow apply false
+    alias libs.plugins.mod-publisher apply false
 }
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
@@ -17,7 +17,7 @@ allprojects {
 
     archivesBaseName = "$modid-$project.name"
     group = "$mod_maven_group.$modid"
-    version = "%sv$mod_version-$project_release_type".formatted(project_game_versions.split(',').size() < 1 ? "$mc_version-" : "")
+    version = "%sv$mod_version-$project_release_type".formatted(project_game_versions.split(',').size() < 1 ? "${libs.versions.minecraft.get()}-" : "")
 
     repositories {
         mavenCentral()
@@ -83,12 +83,12 @@ allprojects {
         // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
         // If Javadoc is generated, this must be specified in that task too.
         options.encoding = "UTF-8"
-        options.release = project_java_version as Integer
+        options.release = libs.versions.java.get() as Integer
         options.warnings = false
     }
 
     java {
-        toolchain.languageVersion = JavaLanguageVersion.of(project_java_version)
+        toolchain.languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
         withSourcesJar()
         withJavadocJar()
     }
@@ -144,12 +144,12 @@ subprojects {
     }
 
     dependencies {
-        minecraft "net.minecraft:minecraft:${mc_version}"
+        minecraft "net.minecraft:minecraft:${libs.versions.minecraft.get()}"
         mappings loom.layered() {
             officialMojangMappings() {
                 setNameSyntheticMembers(true)
             }
-            parchment("org.parchmentmc.data:parchment-${mc_version}:$parchment_mappings_version@zip")
+            parchment("org.parchmentmc.data:parchment-${libs.versions.parchment.minecraft.get()}:${libs.versions.parchment.version.get()}@zip")
         }
     }
 
@@ -253,7 +253,7 @@ subprojects {
 }
 
 architectury {
-    minecraft = mc_version
+    minecraft = libs.versions.minecraft.get()
 }
 
 apply from: 'https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v1/tasks.gradle'
