@@ -168,7 +168,7 @@ subprojects {
 
         var resourceProperties = project.properties + [
                 project:            project,
-                min_fml_version:    min_forge_version.replaceAll("\\..*", "")
+                min_fml_version:    libs.versions.minecraftforge.min.get().replaceAll("\\..*", "")
         ]
 
         var matchingFiles = [
