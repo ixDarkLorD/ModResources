@@ -112,7 +112,7 @@ publisher {
     setVersionType(project_release_type)
     setChangelog(file("../CHANGELOG.md"))
 
-    setProjectVersion("${mc_version}-${project.version}")
+    setProjectVersion("${libs.versions.minecraft.get()}-${project.version}")
     setDisplayName("[${project.hasProperty("platform_name") ? project.findProperty("platform_name") : uppercaseFirstChar(project.name)}] ${project_game_versions.split(',').join(" - ")} | v${mod_version} " + uppercaseString("${project_release_type}"))
     setGameVersions(project_game_versions.split(','))
     setLoaders(project.name)
