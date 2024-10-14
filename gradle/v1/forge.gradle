@@ -130,4 +130,4 @@ components.java {
     }
 }
 
-[tasks.publisher].each { it.finalizedBy project.tasks.refreshUpdateJson }
+[tasks.publishMod, tasks.publishCurseforge, tasks.publishModrinth, tasks.publishGitHub].each { it.finalizedBy project.tasks.refreshUpdateJson }
