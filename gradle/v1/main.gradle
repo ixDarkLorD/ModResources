@@ -16,13 +16,8 @@ allprojects {
         mavenCentral()
         mavenLocal()
         maven {
-            name = "Sponge / Mixin"
+            name = "Sponge"
             url = "https://repo.spongepowered.org/repository/maven-public/"
-        }
-        maven {
-            // location of the maven that hosts JEI files before January 2023
-            name = "Progwml6's maven"
-            url = "https://dvs1.progwml6.com/files/maven/"
         }
         maven {
             // location of the maven that hosts JEI files since January 2023
@@ -30,43 +25,43 @@ allprojects {
             url = "https://maven.blamejared.com/"
         }
         maven {
+            // location of the maven that hosts JEI files before January 2023
+            name = "Progwml6's maven"
+            url = "https://dvs1.progwml6.com/files/maven/"
+        }
+        maven {
             // location of a maven mirror for JEI files, as a fallback
             name = "ModMaven"
             url = "https://modmaven.dev"
         }
         maven {
-            name = "TerraformersMC"
-            url = "https://maven.terraformersmc.com/"
+            name = "Dark Mod Resources"
+            url = "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/maven/"
         }
-        maven {
-            name = "TheIllusiveC4's Maven"
-            url = "https://maven.theillusivec4.top/"
-        }
-        maven {
-            url "https://maven.jamieswhiteshirt.com/libs-release"
-            content {
-                includeGroup "com.jamieswhiteshirt"
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "CurseForge"
+                    url = "https://cursemaven.com"
+                }
+            }
+            filter {
+                includeGroup "curse.maven"
             }
         }
-        maven {
-            name = 'GeckoLib'
-            url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
-            content {
-                includeGroupByRegex("software\\.bernie.*")
-                includeGroup("com.eliotlash.mclib")
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "Modrinth"
+                    url = "https://api.modrinth.com/maven"
+                }
+            }
+            filter {
+                includeGroup "maven.modrinth"
             }
         }
-        maven {
-            name = "Ladysnake Mods"
-            url = 'https://maven.ladysnake.org/releases'
-        }
-        maven {
-            name = "Curse Maven"
-            url = "https://cursemaven.com"
-        }
-        maven {
-            name = "Modrinth Maven"
-            url = "https://api.modrinth.com/maven"
+        flatDir {
+            dirs "libs"
         }
     }
 
