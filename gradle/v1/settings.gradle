@@ -1,7 +1,7 @@
 dependencyResolutionManagement {
     repositories {
         maven {
-            name = "ModResources"
+            name = "Dark Mod Resources"
             url = "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/maven/"
         }
     }
