@@ -62,7 +62,7 @@ dependencies {
     shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive = false }
 
     // NeoForge
-    neoForge libs.neoforge.neoforge
+    neoForge libs.neoforge.loader
 
     if (libs.hasProperty("bettermodsbutton") && libs.bettermodsbutton.hasProperty("neoforge")) {
         modLocalRuntime(libs.bettermodsbutton.neoforge) { transitive = false }

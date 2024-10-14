@@ -8,5 +8,5 @@ loom {
 
 dependencies {
     // Fabric Loader
-    modCompileOnly libs.fabricloader.fabric
+    modCompileOnly libs.fabric.loader
 }

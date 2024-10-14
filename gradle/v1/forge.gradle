@@ -83,7 +83,7 @@ dependencies {
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
 
     // Minecraft Forge
-    forge libs.minecraftforge.forge
+    forge libs.minecraftforge.loader
 
     // Mixin Extras
     implementation(annotationProcessor(libs.mixinextras.common.get()))
