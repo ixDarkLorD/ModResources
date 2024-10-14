@@ -97,4 +97,4 @@ components.java {
     }
 }
 
-[tasks.modrinth, tasks.curseforge].each { it.finalizedBy project.tasks.refreshUpdateJson }
+[tasks.publisher].each { it.finalizedBy project.tasks.refreshUpdateJson }
