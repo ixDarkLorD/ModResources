@@ -135,7 +135,7 @@ publisher {
     // which could possibly mean that the jar is empty
     setDisableEmptyJarCheck(true)
 
-    List<String> result = extractDependencies(project.properties.get(project.name + "_publish_dependencies") as String, project.name)
+    List<String> result = extractDependencies(project.name)
 
     [curseDepends, modrinthDepends].each {
         if (!result[0].isEmpty())
@@ -174,7 +174,11 @@ static String uppercaseFirstChar(String str) {
     return str.substring(0, 1).toUpperCase() + str.substring(1)
 }
 
-static List<String> extractDependencies(String input, String projectName) {
+static List<String> extractDependencies(String projectName) {
+    String input = project.hasProperty(projectName + "_publish_dependencies")
+            ? project.findProperty(projectName + "_publish_dependencies")
+            : null
+
     if (input == null)
         throw new IllegalStateException("There is no dependencies property for %s project".formatted(projectName))
 
