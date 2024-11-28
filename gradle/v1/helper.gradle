@@ -135,8 +135,8 @@ publisher {
     // which could possibly mean that the jar is empty
     setDisableEmptyJarCheck(true)
 
-    String input = project.hasProperty(projectName + "_publish_dependencies")
-            ? project.findProperty(projectName + "_publish_dependencies")
+    String input = project.hasProperty(project.name + "_publish_dependencies")
+            ? project.findProperty(project.name + "_publish_dependencies")
             : null
     List<String> result = extractDependencies(input, project.name)
 
