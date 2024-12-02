@@ -173,24 +173,37 @@ static String getNextVersion(String ver) {
 }
 
 static String getLatestVersion(List<String> versions) {
-    def suffixOrder = [
-            'alpha': 1,  // Pre-release versions (lowest priority)
-            'beta': 2,   // Pre-release versions
-            'rc': 3,     // Release candidates (higher priority than beta)
-            'hotfix': 4, // Hotfix (could be considered a patch)
-            'snapshot': 5, // Snapshot versions (for ongoing development)
-            '': 6        // Stable versions (highest priority)
-    ]
+    // Define the suffix priority list
+    def suffixPriority = ["", "snapshot", "hotfix", "rc", "beta", "alpha"]
 
-    return versions.max { version ->
-        def numericPart = version.replaceAll('[^0-9.]', '')  // Remove anything that's not a number or dot
-        def suffixPart = version.replaceAll('[0-9.]*', '')  // Remove the numeric part, leaving the suffix
+    def compareVersions = { String version1, String version2 ->
+        def normalizeVersion = { String version ->
+            // Normalize the version, separating suffix
+            def mainVersion = version.replaceAll("[-_]", ".").replaceAll("([a-zA-Z])", ".$1")
+            def parts = mainVersion.split(/\./).collect { it.isNumber() ? it.toInteger() : it.toString() }
 
-        def versionNumbers = numericPart.tokenize('.').collect { it.toInteger() }
-        def suffixPrecedence = suffixOrder[suffixPart] ?: 0  // Default to 0 if suffix is not in the map
+            def suffix = parts[-1] instanceof String ? parts.pop() : ""
+            return [parts, suffix]
+        }
 
-        return [versionNumbers, suffixPrecedence]
+        def (parts1, suffix1) = normalizeVersion(version1)
+        def (parts2, suffix2) = normalizeVersion(version2)
+
+        // Compare main version numbers
+        def maxLength = Math.max(parts1.size(), parts2.size())
+        for (int i = 0; i < maxLength; i++) {
+            def part1 = i < parts1.size() ? parts1[i] : 0
+            def part2 = i < parts2.size() ? parts2[i] : 0
+            if (part1 != part2) return part1 <=> part2
+        }
+
+        // Compare suffixes based on priority
+        def suffixIndex1 = suffixPriority.indexOf(suffix1)
+        def suffixIndex2 = suffixPriority.indexOf(suffix2)
+        return suffixIndex1 <=> suffixIndex2
     }
+
+    return versions.max { a, b -> compareVersions(a, b) }
 }
 
 static String uppercaseString(String str) {
