@@ -179,7 +179,7 @@ static String getLatestVersion(List<String> versions) {
     def compareVersions = { String version1, String version2 ->
         def normalizeVersion = { String version ->
             // Normalize the version, separating suffix
-            def mainVersion = version.replaceAll("[-_]", ".").replaceAll("([a-zA-Z])", ".$1")
+            def mainVersion = version.replaceAll("[-_]", ".").replaceAll("([a-zA-Z])", '.$1')
             def parts = mainVersion.split(/\./).collect { it.isNumber() ? it.toInteger() : it.toString() }
 
             def suffix = parts[-1] instanceof String ? parts.pop() : ""
