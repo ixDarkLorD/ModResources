@@ -150,13 +150,13 @@ publisher {
 
 ext.helper = [
         getNextVersion: { version ->
-            return getNextVersion(version)
+            return getNextVersion(version as String)
         },
         getLatestVersion: { versions ->
-            return getLatestVersion(versions)
+            return getLatestVersion(versions as List<String>)
         },
         uppercaseFirstChar: { string ->
-            return uppercaseFirstChar(string)
+            return uppercaseFirstChar(string as String)
         },
         loaderNames: { return loaderNames() }
 ]
