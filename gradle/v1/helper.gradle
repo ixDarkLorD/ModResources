@@ -149,8 +149,11 @@ publisher {
 }
 
 ext.helper = [
-        getNextVersion: { string ->
-            return getNextVersion(string)
+        getNextVersion: { version ->
+            return getNextVersion(version)
+        },
+        getLatestVersion: { versions ->
+            return getLatestVersion(versions)
         },
         uppercaseFirstChar: { string ->
             return uppercaseFirstChar(string)
@@ -167,6 +170,27 @@ static String getNextVersion(String ver) {
     versionMatcher.find()
     def currentVersion = versionMatcher.group(1)
     return currentVersion.substring(0, currentVersion.indexOf(".") + 1).concat(String.valueOf(Integer.parseInt(currentVersion.substring(currentVersion.indexOf(".") + 1, currentVersion.size())) + 1))
+}
+
+static String getLatestVersion(List<String> versions) {
+    def suffixOrder = [
+            'alpha': 1,  // Pre-release versions (lowest priority)
+            'beta': 2,   // Pre-release versions
+            'rc': 3,     // Release candidates (higher priority than beta)
+            'hotfix': 4, // Hotfix (could be considered a patch)
+            'snapshot': 5, // Snapshot versions (for ongoing development)
+            '': 6        // Stable versions (highest priority)
+    ]
+
+    return versions.max { version ->
+        def numericPart = version.replaceAll('[^0-9.]', '')  // Remove anything that's not a number or dot
+        def suffixPart = version.replaceAll('[0-9.]*', '')  // Remove the numeric part, leaving the suffix
+
+        def versionNumbers = numericPart.tokenize('.').collect { it.toInteger() }
+        def suffixPrecedence = suffixOrder[suffixPart] ?: 0  // Default to 0 if suffix is not in the map
+
+        return [versionNumbers, suffixPrecedence]
+    }
 }
 
 static String uppercaseString(String str) {

@@ -127,7 +127,7 @@ subprojects {
         silentMojangMappingsLicense()
         mixin {
             useLegacyMixinAp = true
-            defaultRefmapName = "$modid%s.refmap.json".formatted(project.name == "common" ? ".$project.name" : "")
+            defaultRefmapName = "$modid%s.refmap.json".formatted(project.name == "common" ? ".common" : "")
         }
     }
 
@@ -161,9 +161,32 @@ subprojects {
 
         fileNames.forEach {from, to -> rename from, to }
 
-        var resourceProperties = project.properties + [
-                project:            project,
-                min_fml_version:    libs.versions.minecraftforge.min.get().replaceAll("\\..*", "")
+        var resourceProperties = [
+                project: project,
+                modid: modid,
+                mod_name: mod_name,
+                mod_description: mod_description,
+                mod_group: project.group,
+                mod_page_url: mod_page_url,
+                mod_issue_url: mod_issue_url,
+                mod_source_url: mod_source_url,
+                mod_forge_update_url: mod_forge_update_url,
+                mod_neoforge_update_url: mod_neoforge_update_url,
+                mod_author: mod_author,
+                mod_license: mod_license,
+
+                mc_version: libs.versions.minecraft.get(),
+                max_mc_version: helper.getLatestVersion(project_game_versions.split(",")),
+                resource_pack_format: libs.versions.resourcepack.get(),
+                data_pack_format: libs.versions.datapack.get(),
+                min_fabric_version: libs.versions.fabricloader.min.get(),
+                min_fabric_api_version: libs.versions.fabricapi.min.get(),
+                min_forge_fml_version: "1",
+                min_forge_version: libs.versions.minecraftforge.min.get(),
+                min_neoforge_fml_version: "1",
+                min_neoforge_version: libs.versions.neoforge.min.get(),
+                mod_fabric_environment: mod_fabric_environment,
+                mod_forge_display_test: mod_forge_display_test
         ]
 
         var matchingFiles = [
