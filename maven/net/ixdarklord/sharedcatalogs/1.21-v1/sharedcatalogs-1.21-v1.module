@@ -24,11 +24,11 @@
         {
           "name": "sharedcatalogs-1.21-v1.toml",
           "url": "sharedcatalogs-1.21-v1.toml",
-          "size": 3602,
-          "sha512": "3556588a3dd4e9ad4d5f18f2a6a045efb79388ff86ba366302d4666ba92aa9e788e6c406f8a8191eb602001e9fb2a681602909436e79e5e01e9a30e825b9d291",
-          "sha256": "6b94f60f148903f6fd0630d0cd25f2c57ef67fb65eddb2d94094b66f6d4943ac",
-          "sha1": "2f1641946a69261edadab2050303009f76cbfb33",
-          "md5": "8f3f274c3923bf200e7d4de4bba7c3ed"
+          "size": 4199,
+          "sha512": "d3a06acf3efd69a2a2f6aab39964dec8e21a29cb36a30af2aa7c886ba52fdb81cedf8d8b2cca2ea5cf3f71e67bb026a4dd28b1992a39da425272420808d514c1",
+          "sha256": "5dbb2f5f04a4c5ca8e90f5405eff529882a245553ecb41db6ec7c4d7237db727",
+          "sha1": "d992cd53c5853210431bb2610239f697aaa68cff",
+          "md5": "b6cc5c76c9f5bb1da376fef1af4e9e5f"
         }
       ]
     }
