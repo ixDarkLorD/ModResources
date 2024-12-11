@@ -137,7 +137,7 @@ publisher {
 
     String input = project.hasProperty(project.name + "_publish_dependencies")
             ? project.findProperty(project.name + "_publish_dependencies")
-            : null
+            : new ArrayList()
     List<String> result = extractDependencies(input, project.name)
 
     [curseDepends, modrinthDepends].each {
