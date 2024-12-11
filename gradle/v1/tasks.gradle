@@ -37,6 +37,11 @@ tasks.register("allPublish", GradleBuild) {
     tasks = allSubprojects.collect { ":" + it + ":clean" } + allSubprojects.collect { ":" + it + ":publishMavenJavaPublicationToModResourcesRepository" }
 }
 
+tasks.register("allPublishToLocal", GradleBuild) {
+    group = "_publish"
+    tasks = allSubprojects.collect { ":" + it + ":clean" } + allSubprojects.collect { ":" + it + ":publishToMavenLocal" }
+}
+
 allSubprojects.forEach { projectName ->
     tasks.register(projectName.substring(0, 1).toLowerCase() + projectName.substring(1).replaceAll("\\W", "") + "GenSources", GradleBuild) {
         group = "_setup"
