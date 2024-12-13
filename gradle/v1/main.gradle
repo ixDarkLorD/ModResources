@@ -10,7 +10,7 @@ allprojects {
 
     archivesBaseName = "$modid-$project.name"
     group = "$mod_maven_group.$modid"
-    version = "%sv$mod_version-$project_release_type".formatted(project_game_versions.split(',').size() < 1 ? "${libs.versions.minecraft.get()}-" : "")
+    version = "${libs.versions.minecraft.get()}-$mod_version"
 
     repositories {
         mavenCentral()
@@ -213,8 +213,9 @@ subprojects {
     publishing {
         publications {
             mavenJava(MavenPublication) {
-                artifactId = archivesBaseName
-                version = mod_version
+                groupId = project.group
+                artifactId = project.name
+                version = project.version
                 from components.java
                 pom {
                     name = "${mod_name} [${project.name}]"
