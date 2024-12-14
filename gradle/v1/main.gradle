@@ -35,6 +35,34 @@ allprojects {
             url = "https://modmaven.dev"
         }
         maven {
+            name = 'Jitpack'
+            url = 'https://jitpack.io'
+        }
+        maven {
+            name = 'Shedaniel'
+            url = 'https://maven.shedaniel.me/'
+        }
+        maven {
+            name = 'Parchment'
+            url = 'https://maven.parchmentmc.org'
+        }
+         maven {
+            name = "Fuzs Mod Resources"
+            url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+        }
+        maven {
+            name = 'Terraformers'
+            url = "https://maven.terraformersmc.com/"
+        }
+        maven {
+            name = "ModMaven"
+            url = "https://modmaven.dev"
+        }
+        maven {
+            name = "AppleSkin"
+            url "https://maven.ryanliptak.com/"
+        }
+        maven {
             name = "Dark Mod Resources"
             url = "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/maven/"
         }
