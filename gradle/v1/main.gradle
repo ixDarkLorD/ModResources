@@ -191,9 +191,9 @@ subprojects {
 
         var resourceProperties = [
                 project: project,
-                versions: libs.versions,
                 modid: modid,
                 mod_name: mod_name,
+                mod_version: mod_version,
                 mod_description: mod_description,
                 mod_group: project.group,
                 mod_page_url: mod_page_url,
@@ -204,7 +204,7 @@ subprojects {
                 mod_author: mod_author,
                 mod_license: mod_license,
 
-                mod_version: mod_version,
+                versions: libs.versions,
                 mc_version: libs.versions.minecraft.get(),
                 max_mc_version: helper.getLatestVersion(project_game_versions.split(",")),
                 resource_pack_format: libs.versions.resourcepack.get(),

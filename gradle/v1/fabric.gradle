@@ -12,7 +12,11 @@ loom {
         configureEach {
             ideConfigGenerated(true)
             runDir("../run")
-            vmArgs("-Xms1G", "-Xmx4G", "-Dmixin.debug.export=true", "-Dfabric-tag-conventions-v2.missingTagTranslationWarning=silenced", "-Dfabric-tag-conventions-v1.legacyTagWarning=silenced")
+            vmArgs "-Xms${runtime_min_ram}", "-Xmx${runtime_max_ram}"
+            property 'mixin.debug.export', mixin_debug
+            property 'terminal.ansi', 'true'
+            property 'fabric-tag-conventions-v2.missingTagTranslationWarning', 'silenced'
+            property 'fabric-tag-conventions-v1.legacyTagWarning', 'silenced'
         }
         client {
             client()
@@ -21,6 +25,13 @@ loom {
         server {
             server()
             setConfigName("Fabric Server ${libs.versions.minecraft.get()}")
+        }
+        data {
+            inherit client
+            setConfigName("Fabric Data ${libs.versions.minecraft.get()}")
+            property("fabric-api.datagen")
+            property("fabric-api.datagen.output-dir", project(":common").file("src/generated/resources").absolutePath)
+            property("fabric-api.datagen.modid", modid)
         }
     }
 }
