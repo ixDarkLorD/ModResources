@@ -191,6 +191,7 @@ subprojects {
 
         var resourceProperties = [
                 project: project,
+                versions: libs.versions,
                 modid: modid,
                 mod_name: mod_name,
                 mod_description: mod_description,
@@ -234,7 +235,7 @@ subprojects {
         ]
 
         filesMatching(matchingFiles) {
-            expand resourceProperties
+            expand resourceProperties + project.properties
         }
     }
 
