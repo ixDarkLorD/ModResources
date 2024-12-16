@@ -216,9 +216,7 @@ subprojects {
                 min_neoforge_fml_version: "1",
                 min_neoforge_version: libs.versions.neoforge.min.get(),
                 mod_fabric_environment: mod_fabric_environment,
-                mod_forge_display_test: mod_forge_display_test,
-
-                jei_version: libs.versions.jei.get()
+                mod_forge_display_test: mod_forge_display_test
         ]
 
         var matchingFiles = [
