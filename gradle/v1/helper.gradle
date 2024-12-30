@@ -24,14 +24,9 @@ tasks.register('incrementBuildNumber') {
     doLast {
         def propertiesName = 'gradle.properties'
         // build number is stored in global gradle.properties
-        def propertiesFile = new File(project.gradle.gradleUserHomeDir, propertiesName)
+        def propertiesFile = new File(getRootDir(), propertiesName)
         if (!propertiesFile.canRead()) {
             throw new FileNotFoundException("Could not read file ".concat(propertiesName))
-        }
-        def properties = new Properties()
-        properties.load(file(propertiesFile).newDataInputStream())
-        if (Boolean.parseBoolean(properties['separate_unique_build_numbers'])) {
-            propertiesFile = new File(getRootDir(), propertiesName)
         }
         def buildNumberMatcher = Pattern.compile("unique_build_number=(\\d+)").matcher(propertiesFile.getText())
         buildNumberMatcher.find()
