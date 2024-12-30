@@ -97,7 +97,7 @@ publisher {
     }
 
     // Enable Debug mode. When enabled, no files will actually be uploaded
-    setDebug(project_upload_debug)
+    setDebug(Boolean.parseBoolean(project_upload_debug))
 
     apiKeys {
         if (!project_curse_id.isEmpty())
