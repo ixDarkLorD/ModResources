@@ -143,12 +143,14 @@ publisher {
     [curseDepends, modrinthDepends].each {
         if (!result[0].isEmpty()) {
             result[0].each { arg ->
-                it.required arg
+                if (!arg.isBlank() && !arg.isEmpty()) 
+                    it.required arg
             }
         }
         if (!result[1].isEmpty()) {
             result[1].each { arg ->
-                it.optional arg
+                if (!arg.isBlank() && !arg.isEmpty()) 
+                    it.optional arg
             }
         }
     }
