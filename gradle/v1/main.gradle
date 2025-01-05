@@ -203,22 +203,37 @@ subprojects {
                 mod_neoforge_update_url: mod_neoforge_update_url,
                 mod_author: mod_author,
                 mod_license: mod_license,
+                mod_environment: mod_environment,
 
                 versions: libs.versions,
                 java: libs.versions.java.get(),
                 mc_version: libs.versions.minecraft.get(),
                 max_mc_version: helper.getLatestVersion(project_game_versions.split(",")),
                 resource_pack_format: libs.versions.resourcepack.get(),
-                data_pack_format: libs.versions.datapack.get(),
-                min_fabric_version: libs.versions.fabricloader.min.get(),
-                min_fabric_api_version: libs.versions.fabricapi.min.get(),
-                min_forge_fml_version: "1",
-                min_forge_version: libs.versions.minecraftforge.min.get(),
-                min_neoforge_fml_version: "1",
-                min_neoforge_version: libs.versions.neoforge.min.get(),
-                mod_fabric_environment: mod_fabric_environment,
-                mod_forge_display_test: mod_forge_display_test
+                data_pack_format: libs.versions.datapack.get()
         ]
+
+        if (libs.versions.properties.any { String key = it.key; return key.contains("fabric") }) {
+            resourceProperties = resourceProperties + [
+                    min_fabric_version: libs.versions.fabricloader.min.get(),
+                    min_fabric_api_version: libs.versions.fabricapi.min.get()
+            ]
+        }
+
+        if (libs.versions.properties.any { String key = it.key; return key.contains("minecraftforge") }) {
+            resourceProperties = resourceProperties + [
+                    min_forge_fml_version: "1",
+                    min_forge_version: libs.versions.minecraftforge.min.get(),
+                    mod_forge_display_test: mod_forge_display_test
+            ]
+        }
+
+        if (libs.versions.properties.any { String key = it.key; return key.contains("neoforge") }) {
+            resourceProperties = resourceProperties + [
+                    min_neoforge_fml_version: "1",
+                    min_neoforge_version: libs.versions.neoforge.min.get()
+            ]
+        }
 
         var matchingFiles = [
                 "pack.mcmeta",
