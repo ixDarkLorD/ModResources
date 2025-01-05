@@ -205,6 +205,7 @@ subprojects {
                 mod_license: mod_license,
 
                 versions: libs.versions,
+                java: libs.versions.java.get(),
                 mc_version: libs.versions.minecraft.get(),
                 max_mc_version: helper.getLatestVersion(project_game_versions.split(",")),
                 resource_pack_format: libs.versions.resourcepack.get(),
