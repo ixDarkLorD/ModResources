@@ -112,7 +112,7 @@ publisher {
     setGameVersions(project_game_versions.split(','))
     setLoaders(project.name)
     setJavaVersions(project_java_version.split(','))
-    setCurseEnvironment(mod_fabric_environment == "*" ? "both" : mod_fabric_environment)
+    setCurseEnvironment(mod_environment == "*" ? "both" : mod_environment)
     setIsManualRelease(false)
     setArtifact(remapJar)
 
