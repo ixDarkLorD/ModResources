@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>net.ixdarklord.coolcatlib</groupId>
+  <artifactId>forge</artifactId>
+  <version>1.21-1.1.0</version>
+  <name>CoolCatLib [forge]</name>
+  <description>This library is for the mods that need it.</description>
+  <url>https://github.com/ixDarkLorD/CoolCatLib</url>
+  <licenses>
+    <license>
+      <name>MPL-2.0</name>
+      <url>https://spdx.org/licenses/MPL-2.0.html</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>ixdarklord</id>
+      <name>ixDarkLorD</name>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git://github.com/ixDarkLorD/CoolCatLib.git</connection>
+    <developerConnection>scm:git:git@github.com:ixDarkLorD/CoolCatLib.git</developerConnection>
+    <url>https://github.com/ixDarkLorD/CoolCatLib</url>
+  </scm>
+  <issueManagement>
+    <system>github</system>
+    <url>https://github.com/ixDarkLorD/CoolCatLib/issues</url>
+  </issueManagement>
+  <dependencies>
+    <dependency>
+      <groupId>io.github.llamalad7</groupId>
+      <artifactId>mixinextras-common</artifactId>
+      <version>0.4.1</version>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+</project>
