@@ -30,7 +30,7 @@ loom {
             inherit client
             setConfigName("Fabric Data ${libs.versions.minecraft.get()}")
             property("fabric-api.datagen")
-            property("fabric-api.datagen.output-dir", project(":common").file("src/generated/resources").absolutePath)
+            property("fabric-api.datagen.output-dir", file("src/generated/resources").absolutePath)
             property("fabric-api.datagen.modid", modid)
         }
     }
