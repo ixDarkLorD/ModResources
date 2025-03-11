@@ -176,7 +176,11 @@ subprojects {
             exclude "${modid}.common.mixins.json", "common.mixins.json"
         }
 
-        from(file("src/generated/resources"), project(":common").file("src/generated/resources")) {
+        from(file("src/generated/resources")) {
+            exclude ".cache/"
+        }
+
+        from(project(":common").file("src/generated/resources")) {
             exclude ".cache/"
         }
 
