@@ -13,6 +13,7 @@ loom {
             ideConfigGenerated(true)
             runDir("../run")
             vmArgs "-Xms${runtime_min_ram}", "-Xmx${runtime_max_ram}"
+            vmArgs "-Dlog4j2.level=DEBUG"
             property 'mixin.debug.export', mixin_debug
             property 'terminal.ansi', 'true'
         }
