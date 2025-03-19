@@ -153,10 +153,10 @@ subprojects {
 
     loom {
         silentMojangMappingsLicense()
-        mixin {
+        /* mixin {
             useLegacyMixinAp = true
             defaultRefmapName = "$modid%s.refmap.json".formatted(project.name == "common" ? ".common" : "")
-        }
+        } */
     }
 
     dependencies {
