@@ -259,7 +259,7 @@ subprojects {
         }
 
         filesMatching("log4j.xml") {
-            expand [mod_group: project.group]
+            expand(mod_group: project.group)
         }
     }
 
