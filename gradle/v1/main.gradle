@@ -259,7 +259,9 @@ subprojects {
         }
 
         filesMatching("log4j.xml") {
-            expand(mod_group: project.group)
+            filter { line ->
+                line.replace('${mod_group}', project.group)
+            }
         }
     }
 
