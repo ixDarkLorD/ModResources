@@ -200,6 +200,7 @@ subprojects {
                 mod_version: mod_version,
                 mod_description: mod_description,
                 mod_group: project.group,
+                mod_maven_group: mod_maven_group,
                 mod_page_url: mod_page_url,
                 mod_issue_url: mod_issue_url,
                 mod_source_url: mod_source_url,
@@ -251,7 +252,8 @@ subprojects {
                 "common.mixins.json",
                 "fabric.mixins.json",
                 "neoforge.mixins.json",
-                "forge.mixins.json"
+                "forge.mixins.json",
+                "log4j.xml",
         ]
 
         filesMatching(matchingFiles) {
