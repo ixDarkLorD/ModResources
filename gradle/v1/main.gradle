@@ -257,6 +257,10 @@ subprojects {
         filesMatching(matchingFiles) {
             expand resourceProperties + project.properties
         }
+
+        filesMatching("log4j.xml") {
+            expand [mod_group: project.group]
+        }
     }
 
     publishing {
