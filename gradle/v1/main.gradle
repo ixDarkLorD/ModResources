@@ -192,7 +192,6 @@ subprojects {
         ]
 
         fileNames.forEach {from, to -> rename from, to }
-
         var resourceProperties = [
                 project: project,
                 modid: modid,
@@ -252,8 +251,7 @@ subprojects {
                 "common.mixins.json",
                 "fabric.mixins.json",
                 "neoforge.mixins.json",
-                "forge.mixins.json",
-                "log4j.xml",
+                "forge.mixins.json"
         ]
 
         filesMatching(matchingFiles) {
