@@ -6,10 +6,10 @@ architectury {
 }
 
 loom {
-    log4jConfigs.from project(":common").file("/src/main/resources/log4j.xml")
-
     accessWidenerPath = project(":common").loom.accessWidenerPath
 
+    log4jConfigs.from project(":common").file("/src/main/resources/log4j.xml")
+    
     runs {
         configureEach {
             ideConfigGenerated(true)

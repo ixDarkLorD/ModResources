@@ -165,7 +165,11 @@ ext.helper = [
 ]
 
 List<String> loaderNames() {
-    return rootProject.subprojects.name.collect { it.toLowerCase() }.findAll { !it.contains("common") && !it.contains("test") }
+    var ignoreNames = ["common", "test", "example", "module", "version"]
+    var projects = rootProject.subprojects.findAll { 
+        !ignoreNames.contains(it.parent.name.toLowerCase()) || ignoreNames.contains(it.name.toLowerCase()) 
+    }
+    return projects.collect { it.name.toLowerCase() }
 }
 
 static String getNextVersion(String ver) {

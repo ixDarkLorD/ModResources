@@ -28,6 +28,9 @@ loom {
             runDir("../run")
             vmArgs "-Xms${runtime_min_ram}", "-Xmx${runtime_max_ram}"
             property 'mixin.debug.export', mixin_debug
+            property 'forge.logging.markers', 'SCAN,REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'terminal.ansi', 'true'
         }
         client {
             client()
