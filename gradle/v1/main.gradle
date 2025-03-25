@@ -321,7 +321,7 @@ subprojects {
         sign publishing.publications.mavenJava
     }
 
-    build.finalizedBy project.tasks.copyJarToDir, project.tasks.incrementBuildNumber
+    build.finalizedBy project.tasks.copyJarToDir
     if (project_loaders.contains(project.name) && loom.isForgeLike()) {
         [tasks.publishCurseforge, tasks.publishModrinth].each {
             it.finalizedBy project.tasks.refreshUpdateJson
