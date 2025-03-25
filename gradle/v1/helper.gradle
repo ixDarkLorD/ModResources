@@ -2,10 +2,12 @@ apply plugin: "com.hypherionmc.modutils.modpublisher"
 
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
-
 import groovy.json.JsonOutput
-
 import java.util.regex.Pattern
+import java.nio.channels.FileChannel
+import java.nio.channels.FileLock
+import java.nio.file.StandardOpenOption
+import java.nio.file.Files
 
 tasks.register('buildInfo') {
     onlyIf { !project_loaders.split(",").contains(project.name) }
@@ -19,97 +21,7 @@ tasks.register('buildInfo') {
     }
 }
 
-import java.nio.channels.FileChannel
-import java.nio.file.StandardOpenOption
 
-tasks.register('incrementBuildNumber') {
-    onlyIf { project.hasProperty('copy_build_jar') }
-    
-    doLast {
-        def jsonFileName = 'build_numbers.json'
-        def jsonFile = new File(getRootDir(), jsonFileName)
-        def lockFile = new File(getRootDir(), 'build_number.lock')
-
-        // Use proper file channel locking
-        FileChannel channel = null
-        FileLock lock = null
-        
-        try {
-            // Create lock file if it doesn't exist
-            lockFile.createNewFile()
-            
-            // Get exclusive lock (will block until available)
-            channel = FileChannel.open(lockFile.toPath(), 
-                StandardOpenOption.WRITE, 
-                StandardOpenOption.CREATE)
-            lock = channel.lock()
-            
-            // Read or initialize JSON
-            def json = jsonFile.exists() ? 
-                new groovy.json.JsonSlurper().parse(jsonFile) : 
-                [projects: [:]]
-                
-            if (!json.projects) {
-                json.projects = [:]
-            }
-
-            // Get or initialize project entry
-            def projectName = project.name
-            if (!json.projects[projectName]) {
-                json.projects[projectName] = 0
-            }
-            
-            // Increment build number
-            def currentBuild = json.projects[projectName] as Integer
-            def newBuild = currentBuild + 1
-            json.projects[projectName] = newBuild
-            
-            // Write back to file
-            jsonFile.write(new groovy.json.JsonBuilder(json).toPrettyString())
-            project.ext.buildNumber = newBuild
-            
-            println "\u001B[36m[INCREMENT]\u001B[0m ${projectName}: \u001B[1m${currentBuild} → ${newBuild}\u001B[0m"
-            
-        } catch (Exception e) {
-            println "\u001B[31m[ERROR]\u001B[0m Failed to increment build number: ${e.message}"
-            throw e
-        } finally {
-            // Release lock in reverse acquisition order
-            try { lock?.release() } catch (Exception e) { /* ignore */ }
-            try { channel?.close() } catch (Exception e) { /* ignore */ }
-        }
-    }
-}
-
-tasks.register('copyJarToDir', Copy) {
-    dependsOn incrementBuildNumber
-    
-    onlyIf { 
-        project.hasProperty('build_jar_output_dir') && 
-        project.findProperty('copy_build_jar').toBoolean() 
-    }
-    
-    doFirst {
-        if (!project.hasProperty('buildNumber')) {
-            throw new GradleException("Build number not available for ${project.name}")
-        }
-    }
-    
-    from(remapJar) {
-        include '*.jar'
-    }
-    
-    into(project.findProperty('build_jar_output_dir'))
-    
-    rename { fileName -> 
-        def newName = fileName.replace("${mod_version}", "${mod_version}-build.${project.buildNumber}")
-        return newName
-    }
-    
-    doLast {
-        println "\u001B[32m[SUCCESS]\u001B[0m Copied ${project.name} (build ${project.buildNumber})"
-    }
-}
 
 tasks.register('refreshUpdateJson') {
     onlyIf { project.loom.isForgeLike() && project.hasProperty('mod_resources') }
