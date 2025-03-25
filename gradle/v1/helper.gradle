@@ -20,19 +20,46 @@ tasks.register('buildInfo') {
 }
 
 tasks.register('incrementBuildNumber') {
-    onlyIf { project.hasProperty('copy_build_jar') && project.hasProperty('unique_build_number') }
+    onlyIf { project.hasProperty('copy_build_jar') }
     doLast {
-        def propertiesName = 'gradle.properties'
-        // build number is stored in global gradle.properties
-        def propertiesFile = new File(getRootDir(), propertiesName)
-        if (!propertiesFile.canRead()) {
-            throw new FileNotFoundException("Could not read file ".concat(propertiesName))
+        def jsonFileName = 'build_numbers.json'
+        def jsonFile = new File(getRootDir(), jsonFileName)
+        
+        // Initialize with colorful log
+        if (!jsonFile.exists()) {
+            println "\u001B[33m[WARN]\u001B[0m Build number file not found, initializing new $jsonFileName with build number 0"
+            jsonFile.write('{"unique_build_number": 0}')
         }
-        def buildNumberMatcher = Pattern.compile("unique_build_number=(\\d+)").matcher(propertiesFile.getText())
-        buildNumberMatcher.find()
-        def versionCode = Integer.parseInt(buildNumberMatcher.group(1))
-        def propertiesContent = buildNumberMatcher.replaceAll("unique_build_number=" + ++versionCode)
-        propertiesFile.write(propertiesContent)
+        
+        if (!jsonFile.canRead()) {
+            throw new FileNotFoundException("\u001B[31m[ERROR]\u001B[0m Could not read file $jsonFileName")
+        }
+        
+        // Parse JSON with error handling
+        def json
+        try {
+            json = new groovy.json.JsonSlurper().parse(jsonFile)
+            println "\u001B[36m[INFO]\u001B[0m Current build number: ${json.unique_build_number}"
+        } catch (Exception e) {
+            throw new RuntimeException("\u001B[31m[ERROR]\u001B[0m Failed to parse $jsonFileName: ${e.message}")
+        }
+        
+        // Increment build number
+        def versionCode = json.unique_build_number as Integer
+        def newVersionCode = versionCode + 1
+        json.unique_build_number = newVersionCode
+        
+        // Write back to file
+        try {
+            jsonFile.write(new groovy.json.JsonBuilder(json).toPrettyString())
+            println "\u001B[32m[SUCCESS]\u001B[0m Incremented build number \u001B[33m$versionCode → $newVersionCode\u001B[0m"
+            println "\u001B[36m[INFO]\u001B[0m Updated build number stored in ${jsonFile.absolutePath}"
+        } catch (Exception e) {
+            throw new RuntimeException("\u001B[31m[ERROR]\u001B[0m Failed to write $jsonFileName: ${e.message}")
+        }
+        
+        // Set the property for current build
+        project.ext.unique_build_number = newVersionCode
     }
 }
 
