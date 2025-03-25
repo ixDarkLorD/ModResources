@@ -19,6 +19,9 @@ tasks.register('buildInfo') {
     }
 }
 
+import java.nio.channels.FileChannel
+import java.nio.file.StandardOpenOption
+
 tasks.register('incrementBuildNumber') {
     onlyIf { project.hasProperty('copy_build_jar') }
     
@@ -27,40 +30,53 @@ tasks.register('incrementBuildNumber') {
         def jsonFile = new File(getRootDir(), jsonFileName)
         def lockFile = new File(getRootDir(), 'build_number.lock')
 
-        // Skip if already incremented in this build
-        if (lockFile.exists()) {
-            println "\u001B[33m[SKIPPED]\u001B[0m Build number already incremented"
-            return
-        }
+        // Use proper file channel locking
+        FileChannel channel = null
+        FileLock lock = null
         
         try {
+            // Create lock file if it doesn't exist
             lockFile.createNewFile()
-
-            // Initialize if needed
-            if (!jsonFile.exists()) {
-                println "\u001B[33m[INIT]\u001B[0m Creating new build number file"
-                jsonFile.write('''{
-    "build_number": 0
-}''')
+            
+            // Get exclusive lock (will block until available)
+            channel = FileChannel.open(lockFile.toPath(), 
+                StandardOpenOption.WRITE, 
+                StandardOpenOption.CREATE)
+            lock = channel.lock()
+            
+            // Read or initialize JSON
+            def json = jsonFile.exists() ? 
+                new groovy.json.JsonSlurper().parse(jsonFile) : 
+                [projects: [:]]
+                
+            if (!json.projects) {
+                json.projects = [:]
             }
 
-            // Parse and increment
-            def json = new groovy.json.JsonSlurper().parse(jsonFile)
-            def currentBuild = json.build_number as Integer
-            def newBuild = currentBuild + 1
-
-            json.build_number = newBuild
-            jsonFile.write(new groovy.json.JsonBuilder(json).toPrettyString())
-
-            println "\u001B[36m[INCREMENT]\u001B[0m Build number: \u001B[1m${currentBuild} → ${newBuild}\u001B[0m"
+            // Get or initialize project entry
+            def projectName = project.name
+            if (!json.projects[projectName]) {
+                json.projects[projectName] = 0
+            }
             
-            // Make available to all projects
-            allprojects { ext.buildNumber = newBuild }
+            // Increment build number
+            def currentBuild = json.projects[projectName] as Integer
+            def newBuild = currentBuild + 1
+            json.projects[projectName] = newBuild
+            
+            // Write back to file
+            jsonFile.write(new groovy.json.JsonBuilder(json).toPrettyString())
+            project.ext.buildNumber = newBuild
+            
+            println "\u001B[36m[INCREMENT]\u001B[0m ${projectName}: \u001B[1m${currentBuild} → ${newBuild}\u001B[0m"
+            
         } catch (Exception e) {
-            println "\u001B[31m[ERROR]\u001B[0m ${e.message}"
+            println "\u001B[31m[ERROR]\u001B[0m Failed to increment build number: ${e.message}"
             throw e
         } finally {
-            lockFile.delete()
+            // Release lock in reverse acquisition order
+            try { lock?.release() } catch (Exception e) { /* ignore */ }
+            try { channel?.close() } catch (Exception e) { /* ignore */ }
         }
     }
 }
@@ -75,9 +91,8 @@ tasks.register('copyJarToDir', Copy) {
     
     doFirst {
         if (!project.hasProperty('buildNumber')) {
-            throw new GradleException("Build number not available - incrementBuildNumber failed")
+            throw new GradleException("Build number not available for ${project.name}")
         }
-        println "\u001B[36m[COPY]\u001B[0m Using build number ${project.buildNumber}"
     }
     
     from(remapJar) {
@@ -88,13 +103,11 @@ tasks.register('copyJarToDir', Copy) {
     
     rename { fileName -> 
         def newName = fileName.replace("${mod_version}", "${mod_version}-build.${project.buildNumber}")
-        println "\u001B[35m[RENAME]\u001B[0m ${fileName} → ${newName}"
         return newName
     }
     
     doLast {
-        println "\u001B[32m[SUCCESS]\u001B[0m JAR copied to ${destinationDir}"
-        println "\u001B[32m          Final name: ${remapJar.archiveFileName.get()}-build.${project.buildNumber}"
+        println "\u001B[32m[SUCCESS]\u001B[0m Copied ${project.name} (build ${project.buildNumber})"
     }
 }
 
