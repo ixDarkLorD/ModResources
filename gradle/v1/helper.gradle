@@ -5,10 +5,8 @@ import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
 import java.util.regex.Pattern
 
-import java.nio.channels.FileChannel
-import java.nio.channels.FileLock
-import java.nio.file.StandardOpenOption
 import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 tasks.register('buildInfo') {
     onlyIf { !project_loaders.split(",").contains(project.name) }
@@ -28,79 +26,48 @@ tasks.register('incrementBuildNumber') {
     doLast {
         def jsonFileName = 'build_numbers.json'
         def jsonFile = new File(getRootDir(), jsonFileName)
-        def lockFile = new File(getRootDir(), 'build_number.lock')
+        def tempFile = new File(getRootDir(), "${jsonFileName}.tmp")
 
-        FileChannel channel = null
-        FileLock lock = null
-        
         try {
-            // Create parent directories if needed
-            jsonFile.parentFile.mkdirs()
-            
-            // Create lock file atomically
-            if (!lockFile.exists()) {
-                Files.createFile(lockFile.toPath())
-            }
-            
-            // Get exclusive lock with timeout (10 seconds)
-            channel = FileChannel.open(lockFile.toPath(), 
-                StandardOpenOption.WRITE,
-                StandardOpenOption.CREATE)
-            lock = channel.tryLock()
-            
-            if (lock == null) {
-                throw new RuntimeException("Could not acquire build number lock after 10 seconds")
-            }
-
             // Read or initialize JSON
-            def json = jsonFile.exists() ? 
-                new groovy.json.JsonSlurper().parse(jsonFile) : 
-                [projects: [:]]
-                
-            if (!json.projects) {
-                json.projects = [:]
+            def json = [projects: [:]]
+            if (jsonFile.exists()) {
+                json = new groovy.json.JsonSlurper().parse(jsonFile)
+                if (!json.projects) {
+                    json.projects = [:]
+                }
             }
 
-            // Handle project entry
+            // Get or initialize project entry
             def projectName = project.name
             def currentBuild = (json.projects[projectName] ?: 0) as Integer
             def newBuild = currentBuild + 1
             json.projects[projectName] = newBuild
             
-            // Atomic write
-            def tempFile = new File(jsonFile.parentFile, "${jsonFile.name}.tmp")
+            // Atomic write using temp file
             tempFile.write(new groovy.json.JsonBuilder(json).toPrettyString())
-            
-            // Atomic rename (works across all platforms)
-            if (!tempFile.renameTo(jsonFile)) {
-                throw new RuntimeException("Failed to atomically update build numbers file")
-            }
+            Files.move(
+                tempFile.toPath(), 
+                jsonFile.toPath(), 
+                StandardCopyOption.REPLACE_EXISTING,
+                StandardCopyOption.ATOMIC_MOVE
+            )
             
             project.ext.buildNumber = newBuild
             
             println "\u001B[36m[INCREMENT]\u001B[0m ${projectName}: \u001B[1m${currentBuild} → ${newBuild}\u001B[0m"
             
         } catch (Exception e) {
+            // Clean up temp file if something went wrong
+            tempFile.delete()
             println "\u001B[31m[ERROR]\u001B[0m Failed to increment build number: ${e.message}"
             throw e
-        } finally {
-            // Release lock safely
-            try { 
-                lock?.release() 
-            } catch (Exception e) { 
-                println "\u001B[33m[WARN]\u001B[0m Could not release lock: ${e.message}" 
-            }
-            try { 
-                channel?.close() 
-            } catch (Exception e) { 
-                println "\u001B[33m[WARN]\u001B[0m Could not close channel: ${e.message}" 
-            }
         }
     }
 }
 
 tasks.register('copyJarToDir', Copy) {
-    dependsOn incrementBuildNumber 
+    dependsOn incrementBuildNumber
     
     onlyIf { 
         project.hasProperty('build_jar_output_dir') && 
@@ -109,9 +76,9 @@ tasks.register('copyJarToDir', Copy) {
     
     doFirst {
         if (!project.hasProperty('buildNumber')) {
-            throw new GradleException("Build number not available - incrementBuildNumber failed")
+            throw new GradleException("Build number not available for ${project.name}")
         }
-        println "\u001B[36m[COPY]\u001B[0m Using build number ${project.buildNumber}"
+        println "\u001B[36m[COPY]\u001B[0m ${project.name} (build ${project.buildNumber})"
     }
     
     from(remapJar) {
@@ -127,8 +94,7 @@ tasks.register('copyJarToDir', Copy) {
     }
     
     doLast {
-        println "\u001B[32m[SUCCESS]\u001B[0m JAR copied to ${destinationDir}"
-        println "\u001B[32m          Final name: ${remapJar.archiveFileName.get()}-build.${project.buildNumber}"
+        println "\u001B[32m[SUCCESS]\u001B[0m Copied ${project.name} (build ${project.buildNumber})"
     }
 }
 
