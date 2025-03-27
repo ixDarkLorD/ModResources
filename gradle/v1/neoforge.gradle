@@ -5,6 +5,8 @@ architectury {
     neoForge()
 }
 
+sourceSets.main.resources { srcDir = file("src/generated/resources") }
+
 loom {
     accessWidenerPath = project(":common").loom.accessWidenerPath
 
