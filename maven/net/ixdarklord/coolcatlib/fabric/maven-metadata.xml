@@ -3,12 +3,13 @@
   <groupId>net.ixdarklord.coolcatlib</groupId>
   <artifactId>fabric</artifactId>
   <versioning>
-    <latest>1.21-1.1.2</latest>
-    <release>1.21-1.1.2</release>
+    <latest>1.21-2101.1.1.2</latest>
+    <release>1.21-2101.1.1.2</release>
     <versions>
       <version>1.21-1.1.0</version>
       <version>1.21-1.1.2</version>
+      <version>1.21-2101.1.1.2</version>
     </versions>
-    <lastUpdated>20250411202110</lastUpdated>
+    <lastUpdated>20250811010356</lastUpdated>
   </versioning>
 </metadata>

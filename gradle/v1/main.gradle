@@ -310,15 +310,19 @@ subprojects {
             }
         }
         repositories {
-            maven {
-                name = "ModResources"
-                url "file://" + project.hasProperty("mod_resources") ? "${project.findProperty("mod_resources")}/maven" : null
+            if (project.hasProperty("mod_resources")) {
+                maven {
+                    name = "ModResources"
+                    url "file://" + project.findProperty("mod_resources") + "/maven"
+                }
             }
         }
     }
 
-    signing {
-        sign publishing.publications.mavenJava
+    if (project.hasProperty("signing.keyId")) {
+        signing {
+            sign publishing.publications.mavenJava
+        }
     }
 
     build.finalizedBy project.tasks.copyJarToDir
