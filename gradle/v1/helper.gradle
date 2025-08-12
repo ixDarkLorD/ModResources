@@ -161,7 +161,7 @@ publisher {
     setDisplayName("[${project.hasProperty("platform_name") ? project.findProperty("platform_name") : uppercaseFirstChar(project.name)}] ${project_game_versions.split(',').join(" - ")} | v${mod_version} " + uppercaseString("${project_release_type}"))
     setGameVersions(project_game_versions.split(','))
     setLoaders(project.name)
-    setJavaVersions(project_java_version.split(','))
+    setJavaVersions(libs.versions.java.get().split(','))
     setCurseEnvironment(mod_environment == "*" ? "both" : mod_environment)
     setIsManualRelease(false)
     setArtifact(remapJar)
