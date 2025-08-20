@@ -1,0 +1,19 @@
+dependencyResolutionManagement {
+    repositories {
+        maven {
+            name = "Dark Mod Resources"
+            url = "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/maven/"
+        }
+    }
+    versionCatalogs {
+        libs {
+            plugin("architectury-loom", "dev.architectury.loom").version("1.11")
+            plugin("architectury-plugin", "architectury-plugin").version("3.4-SNAPSHOT")
+            plugin("shadow", "com.github.johnrengelman.shadow").version("8.1.1")
+            plugin("modpublisher", "com.hypherionmc.modutils.modpublisher").version("2.+")
+            from("net.ixdarklord:sharedcatalogs:${dependencies_catalog_version}")
+        }
+    }
+}
+
+rootProject.name = "${mod_name.replaceAll("[^a-zA-Z]", "")}-${dependencies_catalog_version.replaceAll("-v\\d+", "")}"
