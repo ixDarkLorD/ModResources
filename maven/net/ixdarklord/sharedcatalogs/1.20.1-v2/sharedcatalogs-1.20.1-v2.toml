@@ -29,6 +29,7 @@ trinkets = "3.7.2"
 [libraries]
 architectury-common = {group = "dev.architectury", name = "architectury", version.ref = "architectury" }
 architectury-fabric = {group = "dev.architectury", name = "architectury-fabric", version.ref = "architectury" }
+architectury-forge = {group = "dev.architectury", name = "architectury-fabric", version.ref = "architectury" }
 curios-forge = {group = "top.theillusivec4.curios", name = "curios-forge", version.ref = "curios" }
 fabric-api = {group = "net.fabricmc.fabric-api", name = "fabric-api", version.ref = "fabricapi-version" }
 fabric-loader = {group = "net.fabricmc", name = "fabric-loader", version.ref = "fabricloader-version" }

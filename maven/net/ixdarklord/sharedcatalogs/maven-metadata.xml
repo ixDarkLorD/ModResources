@@ -3,8 +3,8 @@
   <groupId>net.ixdarklord</groupId>
   <artifactId>sharedcatalogs</artifactId>
   <versioning>
-    <latest>1.21.1-v7</latest>
-    <release>1.21.1-v7</release>
+    <latest>1.20.1-v2</latest>
+    <release>1.20.1-v2</release>
     <versions>
       <version>1.21.1-v1</version>
       <version>1.21-v1</version>
@@ -19,6 +19,6 @@
       <version>1.20.1-v2</version>
       <version>1.21.1-v7</version>
     </versions>
-    <lastUpdated>20250812181933</lastUpdated>
+    <lastUpdated>20250821023311</lastUpdated>
   </versioning>
 </metadata>
