@@ -110,18 +110,6 @@ sourcesJar {
     from commonSources.archiveFile.map { zipTree(it) }
 }
 
-// Include both common and neoforge documentation in the javadoc
-def javadocProjects = [':neoforge', ':common']
-javadoc {
-    source = javadocProjects.collect { project(it).sourceSets.main.allJava }
-    classpath = files(javadocProjects.collect { project(it).sourceSets.main.compileClasspath })
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    archiveClassifier.set('javadoc')
-    from javadoc.destinationDir
-}
-
 components.java {
     withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
         skip()
