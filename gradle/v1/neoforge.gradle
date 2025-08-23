@@ -8,13 +8,16 @@ architectury {
 sourceSets.main.resources { srcDir file("src/generated/resources") }
 
 loom {
-    accessWidenerPath = project(":common").loom.accessWidenerPath
+    neoForge {
+        accessTransformers = files('src/main/resources/META-INF/accesstransformer.cfg')
+    }
 
     runs {
         configureEach {
             ideConfigGenerated(true)
             runDir("../run")
             vmArgs "-Xms${runtime_min_ram}", "-Xmx${runtime_max_ram}"
+            vmArg('-Dneoforge.warnings.onlyin.hide=true')
             property 'mixin.debug.export', mixin_debug
             property 'forge.logging.markers', 'SCAN,REGISTRIES'
             property 'forge.logging.console.level', 'debug'
@@ -63,12 +66,16 @@ repositories {
 }
 
 dependencies {
+    // NeoForge
+    neoForge libs.neoforge.loader
+
     // Common Project
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive = false }
 
-    // NeoForge
-    neoForge libs.neoforge.loader
+    // Nullable annotations.
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'org.jetbrains:annotations:23.0.0'
 
     if (libs.hasProperty("bettermodsbutton") && libs.bettermodsbutton.hasProperty("neoforge")) {
         modLocalRuntime(libs.bettermodsbutton.neoforge) { transitive = false }
@@ -80,21 +87,39 @@ tasks.withType(Jar).configureEach {
 }
 
 shadowJar {
+    exclude 'fabric.mod.json'
+    exclude 'architectury.common.json'
     configurations = [project.configurations.shadowCommon]
     archiveClassifier = "dev-shadow"
 }
 
 remapJar {
-    input.set shadowJar.archiveFile
+    inputFile = shadowJar.archiveFile
     dependsOn shadowJar
-    archiveClassifier = ""
+    archiveClassifier.set(null)
     atAccessWideners.add("${modid}.accesswidener")
+}
+
+jar {
+    archiveClassifier.set('dev')
 }
 
 sourcesJar {
     def commonSources = project(":common").sourcesJar
     dependsOn commonSources
     from commonSources.archiveFile.map { zipTree(it) }
+}
+
+// Include both common and neoforge documentation in the javadoc
+def javadocProjects = [':neoforge', ':common']
+javadoc {
+    source = javadocProjects.collect { project(it).sourceSets.main.allJava }
+    classpath = files(javadocProjects.collect { project(it).sourceSets.main.compileClasspath })
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier.set('javadoc')
+    from javadoc.destinationDir
 }
 
 components.java {

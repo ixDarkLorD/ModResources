@@ -67,19 +67,25 @@ repositories {
 }
 
 dependencies {
-    // Common Project
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
-
-    // Fabric Loader
-    modApi libs.fabric.loader
-
-    // Fabric Api
-    modApi libs.fabric.api
+    // Fabric
+    modImplementation libs.fabric.loader
+    modApi(libs.fabric.api) {
+        exclude(module: 'fabric-api-deprecated')
+    }
 
     if (libs.hasProperty("modmenu") && libs.modmenu.hasProperty("fabric")) {
-        modLocalRuntime(libs.modmenu.fabric) { transitive = false }
+        modImplementation(libs.modmenu.fabric) {
+            exclude(group: 'net.fabricmc.fabric-api')
+        }
     }
+
+    // Common Project
+    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
+    shadowCommon(project(path: ':common', configuration: 'transformProductionFabric')) { transitive false }
+
+    // Nullable annotations.
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'org.jetbrains:annotations:23.0.0'
 }
 
 tasks.withType(Jar).configureEach {
@@ -87,15 +93,16 @@ tasks.withType(Jar).configureEach {
 }
 
 shadowJar {
+    exclude 'architectury.common.json'
     configurations = [project.configurations.shadowCommon]
     archiveClassifier = "dev-shadow"
 }
 
 remapJar {
-    input.set shadowJar.archiveFile
-    dependsOn shadowJar
-    archiveClassifier = ""
     injectAccessWidener = true
+    inputFile = shadowJar.archiveFile
+    dependsOn shadowJar
+    archiveClassifier.set(null)
 }
 
 jar {
@@ -106,6 +113,18 @@ sourcesJar {
     def commonSources = project(":common").sourcesJar
     dependsOn commonSources
     from commonSources.archiveFile.map { zipTree(it) }
+}
+
+// Include both common and fabric documentation in the javadoc
+def javadocProjects = [':fabric', ':common']
+javadoc {
+    source = javadocProjects.collect { project(it).sourceSets.main.allJava }
+    classpath = files(javadocProjects.collect { project(it).sourceSets.main.compileClasspath })
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier.set('javadoc')
+    from javadoc.destinationDir
 }
 
 components.java {

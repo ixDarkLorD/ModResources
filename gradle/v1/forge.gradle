@@ -13,9 +13,6 @@ loom {
     forge {
         convertAccessWideners = true
         extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
-
-        useCustomMixin = false
-
         if (project(":common").file("src/main/resources/${modid}.common.mixins.json").exists() || project(":common").file("src/main/resources/common.mixins.json").exists()) {
             mixinConfig "${modid}.common.mixins.json"
         }
@@ -84,12 +81,16 @@ repositories {
 }
 
 dependencies {
-    // Common Project
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
-
     // Minecraft Forge
     forge libs.minecraftforge.loader
+
+    // Common Project
+    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
+    shadowCommon(project(path: ':common', configuration: 'transformProductionForge')) { transitive = false }
+
+    // Nullable annotations.
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'org.jetbrains:annotations:23.0.0'
 
     // Mixin Extras
     implementation(annotationProcessor(libs.mixinextras.common.get()))
@@ -113,21 +114,38 @@ sourceSets.each {
 }
 
 shadowJar {
+    exclude 'fabric.mod.json'
+    exclude 'architectury.common.json'
     configurations = [project.configurations.shadowCommon]
     archiveClassifier = "dev-shadow"
 }
 
 remapJar {
-    input.set shadowJar.archiveFile
+    inputFile = shadowJar.archiveFile
     dependsOn shadowJar
-    archiveClassifier = ""
-    atAccessWideners.add("${modid}.accesswidener")
+    archiveClassifier.set(null)
+}
+
+jar {
+    archiveClassifier.set('dev')
 }
 
 sourcesJar {
     def commonSources = project(":common").sourcesJar
     dependsOn commonSources
     from commonSources.archiveFile.map { zipTree(it) }
+}
+
+// Include both common and forge documentation in the javadoc
+def javadocProjects = [':forge', ':common']
+javadoc {
+    source = javadocProjects.collect { project(it).sourceSets.main.allJava }
+    classpath = files(javadocProjects.collect { project(it).sourceSets.main.compileClasspath })
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier.set('javadoc')
+    from javadoc.destinationDir
 }
 
 components.java {
