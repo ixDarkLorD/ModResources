@@ -13,8 +13,4 @@ configurations {
 dependencies {
     // Fabric Loader
     modImplementation libs.fabric.loader
-
-    // Nullable annotations.
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-    implementation 'org.jetbrains:annotations:23.0.0'
 }

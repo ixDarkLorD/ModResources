@@ -82,10 +82,6 @@ dependencies {
     // Common Project
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowCommon(project(path: ':common', configuration: 'transformProductionFabric')) { transitive false }
-
-    // Nullable annotations.
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-    implementation 'org.jetbrains:annotations:23.0.0'
 }
 
 tasks.withType(Jar).configureEach {
