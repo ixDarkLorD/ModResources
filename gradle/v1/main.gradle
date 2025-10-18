@@ -267,12 +267,6 @@ subprojects {
         filesMatching(matchingFiles) {
             expand resourceProperties + project.properties
         }
-
-        filesMatching("log4j.xml") {
-            filter { line ->
-                line.replace('${mod_group}', project.group)
-            }
-        }
     }
 
     publishing {
