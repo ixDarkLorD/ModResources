@@ -13,7 +13,7 @@ loom {
     forge {
         convertAccessWideners = true
         extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
-        useCustomMixin = false
+        
         if (project(":common").file("src/main/resources/${modid}.common.mixins.json").exists() || project(":common").file("src/main/resources/common.mixins.json").exists()) {
             mixinConfig "${modid}.common.mixins.json"
         }
@@ -59,13 +59,6 @@ configurations {
     developmentForge.extendsFrom common
 }
 
-// Force this version of jopt-simple as does Forge, otherwise client configuration is unable to launch.
-configurations.configureEach {
-    resolutionStrategy {
-        force "net.sf.jopt-simple:jopt-simple:5.0.4"
-    }
-}
-
 repositories {
     maven {
         name = "Minecraft Forge"
@@ -88,18 +81,14 @@ dependencies {
 
     // Minecraft Forge
     forge libs.minecraftforge.loader
+
+    // Mixin Extras
+    compileOnly(annotationProcessor(libs.mixinextras.common.get()))
+    implementation libs.mixinextras.forge
 }
 
 tasks.withType(Jar).configureEach {
     exclude "architectury.common.json"
-}
-
-// Merge the classes and resources into the same directory, as Java expects modules to be in a single directory.
-// Aims to avoid issues with classes from the Forge (not Common) subproject occasionally not being included at runtime.
-sourceSets.each {
-    var dir = layout.buildDirectory.dir("sourcesSets/${it.name}")
-    it.java.destinationDirectory = dir
-    it.output.resourcesDir = dir
 }
 
 shadowJar {

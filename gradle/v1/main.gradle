@@ -145,6 +145,7 @@ allprojects {
     java {
         toolchain.languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
         withSourcesJar()
+        withJavadocJar()
     }
 
     // silence missing javadoc comments, we just don't care
@@ -315,7 +316,8 @@ subprojects {
                 from components.java
                 setArtifacts([
                         tasks.named("remapJar").get(),
-                        tasks.named("sourcesJar").get()
+                        tasks.named("sourcesJar").get(),
+                        tasks.named("javadocJar").get()
                 ])
 
                 pom {
