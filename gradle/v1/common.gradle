@@ -13,4 +13,7 @@ configurations {
 dependencies {
     // Fabric Loader
     modImplementation libs.fabric.loader
+
+    // Mixin Extras
+    compileOnly libs.mixinextras.common
 }

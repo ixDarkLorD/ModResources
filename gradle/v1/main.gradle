@@ -145,6 +145,13 @@ allprojects {
         // other mod developers.
         enabled = false
     }
+
+    idea {
+        module {
+            downloadSources = true
+            downloadJavadoc = true
+        }
+    }
 }
 
 subprojects {
@@ -153,18 +160,10 @@ subprojects {
 
     loom {
         silentMojangMappingsLicense()
+
         mixin {
             useLegacyMixinAp = true
             defaultRefmapName = "${modid}.${project.name.toLowerCase()}.refmap.json"
-        }
-
-        // Loom sets the log4j config while in development (in prod the log4j config might be dictated by the launcher or just the game itself).
-        // This loom gradle config specifies that loom uses our customized log4j config file.
-        // ref: https://fabricmc.net/wiki/documentation:fabric_loom
-        // (although we're using the architectury fork of fabric loom, this config remains unchanged)
-        if (project(":common").file("/build/resources/main/log4j.xml").exists() && project.name != "common") {
-            log4jConfigs.from project(":common").file("/build/resources/main/log4j.xml")
-            println("log4j.xml is implemented for ${project.name}")
         }
     }
 
@@ -272,10 +271,16 @@ subprojects {
     publishing {
         publications {
             mavenJava(MavenPublication) {
-                groupId = project.group
-                artifactId = project.name
+                artifactId = "${modId}-${project.name.toLowerCase()}"
                 version = project.version
+
                 from components.java
+                setArtifacts([
+                        tasks.named("remapJar").get(),
+                        tasks.named("sourcesJar").get(),
+                        tasks.named("javadocJar").get()
+                ])
+
                 pom {
                     name = "${mod_name} [${project.name}]"
                     description = "${mod_description}"
@@ -308,16 +313,16 @@ subprojects {
             if (project.hasProperty("mod_resources")) {
                 maven {
                     name = "ModResources"
-                    url "file://" + project.findProperty("mod_resources") + "/maven"
+                    url = uri(project.hasProperty("mod_resources") ?
+                        "${project.findProperty("mod_resources")}/maven" :
+                        System.getenv("local_maven"))
                 }
             }
         }
     }
 
-    if (project.hasProperty("signing.keyId")) {
-        signing {
-            sign publishing.publications.mavenJava
-        }
+    signing {
+        sign publishing.publications.mavenJava
     }
 
     build.finalizedBy project.tasks.copyJarToDir
