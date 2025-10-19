@@ -271,7 +271,7 @@ subprojects {
     publishing {
         publications {
             mavenJava(MavenPublication) {
-                artifactId = "${modId}-${project.name.toLowerCase()}"
+                artifactId = "${modid}-${project.name.toLowerCase()}"
                 version = project.version
 
                 from components.java
