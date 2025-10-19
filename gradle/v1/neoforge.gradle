@@ -66,16 +66,12 @@ repositories {
 }
 
 dependencies {
-    // NeoForge
-    neoForge libs.neoforge.loader
-
     // Common Project
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive = false }
 
-    // Nullable annotations.
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-    implementation 'org.jetbrains:annotations:23.0.0'
+    // NeoForge
+    neoForge libs.neoforge.loader
 
     if (libs.hasProperty("bettermodsbutton") && libs.bettermodsbutton.hasProperty("neoforge")) {
         modLocalRuntime(libs.bettermodsbutton.neoforge) { transitive = false }
