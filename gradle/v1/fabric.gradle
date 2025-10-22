@@ -28,6 +28,7 @@ loom {
         server {
             server()
             setConfigName("Fabric Server ${libs.versions.minecraft.get()}")
+            runDir("../run/server")
         }
         data {
             inherit client
