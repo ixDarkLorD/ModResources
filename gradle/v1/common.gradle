@@ -13,7 +13,4 @@ configurations {
 dependencies {
     // Fabric Loader
     modCompileOnly libs.fabric.loader
-
-    // Mixin Extras
-    compileOnly(annotationProcessor(libs.mixinextras.common.get()))
 }
