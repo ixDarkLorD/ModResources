@@ -17,6 +17,7 @@ loom {
             ideConfigGenerated(true)
             runDir("../run")
             vmArgs "-Xms${runtime_min_ram}", "-Xmx${runtime_max_ram}"
+            property "log4j2.configurationFile", 'https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v2/log4j.xml'
             property 'mixin.debug.export', mixin_debug
             property 'fabric-tag-conventions-v2.missingTagTranslationWarning', 'silenced'
             property 'fabric-tag-conventions-v1.legacyTagWarning', 'silenced'
