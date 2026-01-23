@@ -372,8 +372,6 @@ subprojects {
         )
 
         sign publishing.publications.mavenJava
-    } else {
-        println "⚠ Signing keys not set, skipping signing."
     }
 }
 
