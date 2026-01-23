@@ -361,20 +361,19 @@ subprojects {
     }
 
     signing {
-    if (project.hasProperty('signing.keyId') &&
-        project.hasProperty('signing.password') &&
-        project.hasProperty('signing.secretKeyRingFile')) {
+        if (project.hasProperty('signing.keyId') &&
+            project.hasProperty('signing.password') &&
+            project.hasProperty('signing.secretKeyRingFile')) {
 
-        useInMemoryPgpKeys(
-            project.property('signing.keyId'),
-            project.property('signing.secretKeyRingFile'),
-            project.property('signing.password')
-        )
+            useInMemoryPgpKeys(
+                project.property('signing.keyId'),
+                project.property('signing.secretKeyRingFile'),
+                project.property('signing.password')
+            )
 
-        sign publishing.publications.mavenJava
+            sign publishing.publications.mavenJava
+        }
     }
-}
-
 
     build.finalizedBy project.tasks.copyJarToDir
     if (project_loaders.contains(project.name) && loom.isForgeLike()) {
