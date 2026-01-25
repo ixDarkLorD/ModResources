@@ -38,11 +38,11 @@
         {
           "name": "hytale-devkit-1.0.jar",
           "url": "hytale-devkit-1.0.jar",
-          "size": 109063,
-          "sha512": "11d46872471eb057f9753244af9196bf7a275141ba32f03bd9bebf6c5bc26dd36618097bcd4c75e32201efc542ec136aa5b0df8858709b3e5117196a871b98a0",
-          "sha256": "d23a7930c62a74b254cd8679d17009707cdea0c217e7de46ebbb3257ae799ebc",
-          "sha1": "9b84363072337f7a134f1fa017c4dd5310b4410b",
-          "md5": "fb22770ae178fbc38ca7c0d8c3b1f1dc"
+          "size": 109217,
+          "sha512": "badbe5cde853a0f8d7a3d85a1906eaa2f3318e34c56ec27d31e4025b5b9b4c6d0c78f96e263f3be0cf30a2e87b2bd5867add2d567eb73dd483ebac111b28ecfb",
+          "sha256": "cbfb88950a2578ae801878a30544bf3ec6acb0f79d199f0fc701c501fb55156b",
+          "sha1": "07f5f3d0f7a8d7b44fcac3aa41fbca4b9cfdab58",
+          "md5": "813b83ba0d61228a99ef83cf4dd0b3e5"
         }
       ]
     },
@@ -77,11 +77,11 @@
         {
           "name": "hytale-devkit-1.0.jar",
           "url": "hytale-devkit-1.0.jar",
-          "size": 109063,
-          "sha512": "11d46872471eb057f9753244af9196bf7a275141ba32f03bd9bebf6c5bc26dd36618097bcd4c75e32201efc542ec136aa5b0df8858709b3e5117196a871b98a0",
-          "sha256": "d23a7930c62a74b254cd8679d17009707cdea0c217e7de46ebbb3257ae799ebc",
-          "sha1": "9b84363072337f7a134f1fa017c4dd5310b4410b",
-          "md5": "fb22770ae178fbc38ca7c0d8c3b1f1dc"
+          "size": 109217,
+          "sha512": "badbe5cde853a0f8d7a3d85a1906eaa2f3318e34c56ec27d31e4025b5b9b4c6d0c78f96e263f3be0cf30a2e87b2bd5867add2d567eb73dd483ebac111b28ecfb",
+          "sha256": "cbfb88950a2578ae801878a30544bf3ec6acb0f79d199f0fc701c501fb55156b",
+          "sha1": "07f5f3d0f7a8d7b44fcac3aa41fbca4b9cfdab58",
+          "md5": "813b83ba0d61228a99ef83cf4dd0b3e5"
         }
       ]
     }
