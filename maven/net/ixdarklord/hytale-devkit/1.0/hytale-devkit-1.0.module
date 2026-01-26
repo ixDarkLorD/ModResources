@@ -1,0 +1,89 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.ixdarklord",
+    "module": "hytale-devkit",
+    "version": "1.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "hytale-devkit-1.0.jar",
+          "url": "hytale-devkit-1.0.jar",
+          "size": 110157,
+          "sha512": "faab25103b02e61283f57270a6ea087633c09fe2356278f04d9a031255f94819936aa0435edae8aee45488b8d4944b386b00bf45e1e09dedbc99e75c6fbb0fe7",
+          "sha256": "4c5fa8457cb68dcb09bd322f52cf96c3d75f866df7950dbea9f13f6014d9efd5",
+          "sha1": "f167595c94d535f2f290d3dec1672684077144d8",
+          "md5": "2c2ec62d583664aa7c25e0cdcb26b048"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json",
+          "version": {
+            "requires": "1.6.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "hytale-devkit-1.0.jar",
+          "url": "hytale-devkit-1.0.jar",
+          "size": 110157,
+          "sha512": "faab25103b02e61283f57270a6ea087633c09fe2356278f04d9a031255f94819936aa0435edae8aee45488b8d4944b386b00bf45e1e09dedbc99e75c6fbb0fe7",
+          "sha256": "4c5fa8457cb68dcb09bd322f52cf96c3d75f866df7950dbea9f13f6014d9efd5",
+          "sha1": "f167595c94d535f2f290d3dec1672684077144d8",
+          "md5": "2c2ec62d583664aa7c25e0cdcb26b048"
+        }
+      ]
+    }
+  ]
+}
