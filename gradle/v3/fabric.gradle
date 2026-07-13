@@ -1,0 +1,132 @@
+apply plugin: "com.github.johnrengelman.shadow"
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+sourceSets.main.resources { srcDir file("src/generated/resources") }
+
+loom {
+    accessWidenerPath = project(":common").loom.accessWidenerPath
+
+    log4jConfigs.from project(":common").file("/src/main/resources/log4j.xml")
+
+    runs {
+        configureEach {
+            ideConfigGenerated(true)
+            runDir("../run")
+            vmArgs "-Xms${runtime_min_ram}", "-Xmx${runtime_max_ram}"
+            property "log4j2.configurationFile", 'https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v2/log4j.xml'
+            property 'mixin.debug.export', mixin_debug
+            property 'fabric-tag-conventions-v2.missingTagTranslationWarning', 'silenced'
+            property 'fabric-tag-conventions-v1.legacyTagWarning', 'silenced'
+        }
+        client {
+            client()
+            setConfigName("Fabric Client ${libs.versions.minecraft.get()}")
+        }
+        server {
+            server()
+            setConfigName("Fabric Server ${libs.versions.minecraft.get()}")
+            runDir("../run/server")
+        }
+        data {
+            inherit client
+            setConfigName("Fabric Data ${libs.versions.minecraft.get()}")
+            property("fabric-api.datagen")
+            property("fabric-api.datagen.output-dir", file("src/generated/resources").absolutePath)
+            property("fabric-api.datagen.modid", modid)
+        }
+    }
+}
+
+configurations {
+    common
+    shadowCommon
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+}
+
+repositories {
+    maven {
+        name = "Terraformers"
+        url = "https://maven.terraformersmc.com/"
+    }
+    maven {
+        name = "Modmuss"
+        url = "https://maven.modmuss50.me/"
+    }
+    maven {
+        name = "Ladysnake Libs"
+        url = "https://maven.ladysnake.org/releases"
+    }
+    maven {
+        name = "jamieswhiteshirt"
+        url = "https://maven.jamieswhiteshirt.com/libs-release/"
+    }
+}
+
+dependencies {
+    // Common Project
+    common(project(path: ':common')) { transitive false }
+    shadowCommon(project(path: ':common', configuration: 'transformProductionFabric')) { transitive false }
+
+    // Fabric
+    implementation libs.fabric.loader
+    api(libs.fabric.api) {
+        exclude(module: 'fabric-api-deprecated')
+    }
+
+    if (libs.hasProperty("modmenu") && libs.modmenu.hasProperty("fabric")) {
+        implementation(libs.modmenu.fabric) {
+            exclude(group: 'net.fabricmc.fabric-api')
+        }
+    }
+}
+
+tasks.withType(Jar).configureEach {
+    exclude "architectury.common.json"
+}
+
+// Step 1: raw jar (Loom-processed, e.g. JiJ metadata added to fabric.mod.json)
+jar {
+    archiveClassifier = "raw"
+}
+
+// Step 2: shadowJar becomes the main artifact, built on top of the raw jar
+shadowJar {
+    dependsOn(jar)
+    mainSpec.sourcePaths.clear()
+    from(zipTree(jar.archiveFile))
+
+    exclude 'architectury.common.json'
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = null
+    from rootProject.file("LICENSE.md") // remove this line if you don't have a LICENSE.md at repo root
+}
+
+sourcesJar {
+    def commonSources = project(":common").sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+// Step 3: redirect published variants (.module metadata) to shadowJar
+configurations {
+    apiElements {
+        outgoing.artifacts.clear()
+        outgoing.artifact(shadowJar)
+    }
+    runtimeElements {
+        outgoing.artifacts.clear()
+        outgoing.artifact(shadowJar)
+    }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}
