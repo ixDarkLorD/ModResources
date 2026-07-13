@@ -1,0 +1,392 @@
+tasks.register("printJavaEnvironments") {
+    doLast {
+        println "=============================="
+        println "=== Gradle Runtime Environment ==="
+        println "=============================="
+        println "Gradle JVM:   ${System.getProperty('java.version')} (${System.getProperty('java.vendor')})"
+        println "Java Home:    ${System.getProperty('java.home')}"
+        println "Arch:         ${System.getProperty('os.arch')}"
+        println ""
+
+        println "=============================="
+        println "=== Project Toolchain Environments ==="
+        println "=============================="
+        allprojects.each { p ->
+            try {
+                def toolchainService = p.extensions.findByType(org.gradle.jvm.toolchain.JavaToolchainService)
+                if (toolchainService != null && p.hasProperty('libs')) {
+                    def javaVersion = p.libs.versions.java.get().split(',')[0] as Integer
+                    def launcher = toolchainService.launcherFor {
+                        it.languageVersion = JavaLanguageVersion.of(javaVersion)
+                    }.get()
+
+                    def metadata = launcher.metadata
+                    println "Project: ${p.path}"
+                    println "  Toolchain JDK: ${metadata.vendor} ${metadata.languageVersion}"
+                    println "  JDK Path:      ${metadata.installationPath}"
+                    println ""
+                } else {
+                    println "Project: ${p.path}"
+                    println "  (No toolchain or libs.versions detected)"
+                    println ""
+                }
+            } catch (Exception e) {
+                println "Project: ${p.path}"
+                println "  ⚠️ Error detecting toolchain: ${e.message}"
+                println ""
+            }
+        }
+    }
+}
+
+base {
+	archivesName = "$modid"
+}
+
+allprojects {
+    apply plugin: "idea"
+    apply plugin: "java"
+    apply plugin: "java-library"
+    apply plugin: "maven-publish"
+    apply plugin: "architectury-plugin"
+    apply plugin: "signing"
+
+    group = "$mod_maven_group.$modid"
+    version = "${libs.versions.minecraft.get()}-$mod_version"
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        maven {
+            name = "Sponge"
+            url = "https://repo.spongepowered.org/repository/maven-public/"
+        }
+        maven {
+            // location of the maven that hosts JEI files since January 2023
+            name = "Jared's maven"
+            url = "https://maven.blamejared.com/"
+        }
+        maven {
+            // location of the maven that hosts JEI files before January 2023
+            name = "Progwml6's maven"
+            url = "https://dvs1.progwml6.com/files/maven/"
+        }
+        maven {
+            // location of a maven mirror for JEI files, as a fallback
+            name = "ModMaven"
+            url = "https://modmaven.dev"
+        }
+        maven {
+            name = 'Jitpack'
+            url = 'https://jitpack.io'
+        }
+        maven {
+            name = 'Shedaniel'
+            url = 'https://maven.shedaniel.me/'
+        }
+        maven {
+            name = 'Parchment'
+            url = 'https://maven.parchmentmc.org'
+        }
+         maven {
+            name = "Fuzs Mod Resources"
+            url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+        }
+        maven {
+            name = 'Terraformers'
+            url = "https://maven.terraformersmc.com/"
+        }
+        maven {
+            name = "ModMaven"
+            url = "https://modmaven.dev"
+        }
+        maven {
+            name = "AppleSkin"
+            url "https://maven.ryanliptak.com/"
+        }
+        maven {
+            name = "Dark Mod Resources"
+            url = "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/maven/"
+        }
+        maven { 
+            name = "Nucleoid"
+            url = "https://maven.nucleoid.xyz/releases"
+        }
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "CurseForge"
+                    url = "https://cursemaven.com"
+                }
+            }
+            filter {
+                includeGroup "curse.maven"
+            }
+        }
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "Modrinth"
+                    url = "https://api.modrinth.com/maven"
+                }
+            }
+            filter {
+                includeGroup "maven.modrinth"
+            }
+        }
+        flatDir {
+            dirs "libs"
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        // ensure that the encoding is set to UTF-8, no matter what the system default is
+        // this fixes some edge cases with special characters not displaying correctly
+        // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
+        // If Javadoc is generated, this must be specified in that task too.
+        options.encoding = "UTF-8"
+        options.release = libs.versions.java.get() as Integer
+        options.warnings = false
+    }
+
+    java {
+        withSourcesJar()
+    }
+
+    tasks.withType(Jar).configureEach {
+        duplicatesStrategy DuplicatesStrategy.EXCLUDE
+
+        from rootProject.file("../LICENSE.md")
+        from rootProject.file("../LICENSE-ASSETS.md")
+        from rootProject.file("../LICENSING.md")
+        from rootProject.file("CHANGELOG.md")
+
+        manifest {
+            attributes([
+                    "Specification-Title"           : mod_name,
+                    "Specification-Version"         : mod_version,
+                    "Specification-Vendor"          : mod_author,
+                    "Implementation-Title"          : mod_name,
+                    "Implementation-Version"        : mod_version,
+                    "Implementation-Vendor"         : mod_author,
+                    "Implementation-Timestamp"      : new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                    "Implementation-Timestamp-Milli": System.currentTimeMillis(),
+                    "Implementation-URL"            : mod_source_url,
+                    "Built-On-Java"                 : "${System.getProperty("java.vm.version")} (${System.getProperty("java.vm.vendor")})",
+                    "Built-On-Minecraft"            : project_game_versions
+            ])
+        }
+
+        group "jar"
+    }
+
+    tasks.withType(GenerateModuleMetadata) {
+        enabled = false
+    }
+}
+
+subprojects {
+    apply plugin: 'dev.architectury.loom'
+    apply from: 'https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v3/helper.gradle'
+
+    base {
+		archivesName = rootProject.base.archivesName.get() + (project.name != "common" ? "-" + project.name : "")
+	}
+
+    loom {
+        silentMojangMappingsLicense()
+
+        mixin {
+            useLegacyMixinAp = true
+            defaultRefmapName = "${modid}${(project.name != "common" ? "." + project.name : "")}.refmap.json"
+        }
+    }
+
+    dependencies {
+        minecraft "net.minecraft:minecraft:${libs.versions.minecraft.get()}"
+        mappings loom.layered() {
+            officialMojangMappings() {
+                setNameSyntheticMembers(true)
+            }
+            parchment("org.parchmentmc.data:parchment-${libs.versions.parchment.minecraft.get()}:${libs.versions.parchment.version.get()}@zip")
+        }
+    }
+
+    processResources {
+        duplicatesStrategy DuplicatesStrategy.EXCLUDE
+
+        from(project(":common").sourceSets.main.resources) {
+            exclude "${modid}.mixins.json", "log4j.xml"
+        }
+
+        from(file("src/generated/resources")) {
+            exclude ".cache/"
+        }
+
+        from(project(":common").file("src/generated/resources")) {
+            exclude ".cache/"
+        }
+
+        var fileNames = [
+                "^fabric.mixins.json\$": "${modid}.fabric.mixins.json",
+                "^neoforge.mixins.json\$": "${modid}.neoforge.mixins.json",
+                "^forge.mixins.json\$": "${modid}.forge.mixins.json"
+        ]
+
+        fileNames.forEach {from, to -> rename from, to }
+        var resourceProperties = [
+                project: project,
+                modid: modid,
+                mod_name: mod_name,
+                mod_version: mod_version,
+                mod_description: mod_description,
+                mod_group: project.group,
+                mod_maven_group: mod_maven_group,
+                mod_page_url: mod_page_url,
+                mod_issue_url: mod_issue_url,
+                mod_source_url: mod_source_url,
+                mod_author: mod_author,
+                mod_license: mod_license,
+                mod_environment: mod_environment,
+
+                versions: libs.versions,
+                java_version: libs.versions.java.get().split(",")[0],
+                max_java_version: helper.getLatestVersion(libs.versions.java.get().split(",")),
+                mc_version: libs.versions.minecraft.get(),
+                max_mc_version: helper.getLatestVersion(project_game_versions.split(",")),
+                resource_pack_format: libs.versions.resourcepack.get(),
+                data_pack_format: libs.versions.datapack.get()
+        ]
+
+        if (libs.versions.properties.any { String key = it.key; return key.contains("fabric") }) {
+            resourceProperties = resourceProperties + [
+                    min_fabric_version: libs.versions.fabricloader.min.get(),
+                    min_fabric_api_version: libs.versions.fabricapi.min.get()
+            ]
+        }
+
+        if (libs.versions.properties.any { String key = it.key; return key.contains("minecraftforge") }) {
+            resourceProperties = resourceProperties + [
+                    min_forge_fml_version: "1",
+                    min_forge_version: libs.versions.minecraftforge.min.get(),
+                    mod_forge_display_test: mod_forge_display_test,
+                    mod_forge_update_url: mod_forge_update_url
+            ]
+        }
+
+        if (libs.versions.properties.any { String key = it.key; return key.contains("neoforge") }) {
+            resourceProperties = resourceProperties + [
+                    min_neoforge_fml_version: "1",
+                    min_neoforge_version: libs.versions.neoforge.min.get(),
+                    mod_neoforge_update_url: mod_neoforge_update_url
+            ]
+        }
+
+        var matchingFiles = [
+                "pack.mcmeta",
+                "fabric.mod.json",
+                "META-INF/neoforge.mods.toml",
+                "META-INF/mods.toml",
+                modid + ".common.mixins.json",
+                modid + ".fabric.mixins.json",
+                modid + ".neoforge.mixins.json",
+                modid + ".forge.mixins.json",
+                "common.mixins.json",
+                "fabric.mixins.json",
+                "neoforge.mixins.json",
+                "forge.mixins.json"
+        ]
+
+        filesMatching(matchingFiles) {
+            expand resourceProperties + project.properties
+        }
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                artifactId = "${modid}-${project.name.toLowerCase()}"
+                version = project.version
+
+                from components.java
+                setArtifacts([
+                        tasks.named("remapJar").get(),
+                        tasks.named("sourcesJar").get(),
+                        tasks.named("javadocJar").get()
+                ])
+
+                pom {
+                    name = "${mod_name} [${project.name}]"
+                    description = "${mod_description}"
+                    url = "${mod_source_url}"
+                    scm {
+                        url = "${mod_source_url}"
+                        connection = "${mod_source_url}".replace("https", "scm:git:git").concat(".git")
+                        developerConnection = "${mod_source_url}".replace("https://github.com/", "scm:git:git@github.com:").concat(".git")
+                    }
+                    issueManagement {
+                        system = "github"
+                        url = "${mod_issue_url}"
+                    }
+                    licenses {
+                        license {
+                            name = "${mod_license}"
+                            url = "https://spdx.org/licenses/${mod_license}.html"
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = "${mod_author}".toLowerCase()
+                            name = "${mod_author}"
+                        }
+                    }
+                }
+            }
+        }
+        repositories {
+            if (project.hasProperty("mod_resources")) {
+                maven {
+                    name = "ModResources"
+                    url = uri(project.hasProperty("mod_resources") ?
+                        "${project.findProperty("mod_resources")}/maven" :
+                        System.getenv("local_maven"))
+                }
+            }
+        }
+    }
+
+    signing {
+        if (project.hasProperty('signing.keyId') &&
+            project.hasProperty('signing.password') &&
+            project.hasProperty('signing.secretKeyRingFile')) {
+
+            useInMemoryPgpKeys(
+                project.property('signing.keyId'),
+                project.property('signing.secretKeyRingFile'),
+                project.property('signing.password')
+            )
+
+            sign publishing.publications.mavenJava
+        }
+    }
+
+    idea {
+        module {
+            downloadSources = true
+            downloadJavadoc = true
+        }
+    }
+
+    build.finalizedBy project.tasks.copyJarToDir
+    if (project_loaders.contains(project.name) && loom.isForgeLike()) {
+        [tasks.publishCurseforge, tasks.publishModrinth].each {
+            it.finalizedBy project.tasks.refreshUpdateJson
+        }
+    }
+}
+
+architectury {
+    minecraft = libs.versions.minecraft.get()
+}
+
+apply from: 'https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v1/tasks.gradle'
