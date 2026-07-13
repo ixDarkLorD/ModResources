@@ -81,7 +81,8 @@ tasks.register('copyJarToDir', Copy) {
         println "\u001B[36m[COPY]\u001B[0m ${project.name} (build ${project.buildNumber})"
     }
     
-    from(remapJar) {
+    def jarTask = tasks.findByName("remapJar") ?: tasks.named("shadowJar")
+    from(jarTask) {
         include '*.jar'
     }
     
@@ -164,7 +165,9 @@ publisher {
     setJavaVersions(libs.versions.java.get().split(','))
     setCurseEnvironment(mod_environment == "*" ? "both" : mod_environment)
     setIsManualRelease(false)
-    setArtifact(remapJar)
+
+    def jarTask = tasks.findByName("remapJar") ?: tasks.named("shadowJar")
+    setArtifact(jarTask)
 
     // Override the artifact uploaded to modrinth
     // setPlatformArtifact(Platform.Modrinth, "build/libs/mymod.jar")

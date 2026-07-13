@@ -332,7 +332,9 @@ subprojects {
         }
     }
 
-    build.finalizedBy project.tasks.copyJarToDir
+    if (project_loaders.contains(project.name))
+        build.finalizedBy project.tasks.copyJarToDir
+    
     if (project_loaders.contains(project.name) && loom.isForgeLike()) {
         [tasks.publishCurseforge, tasks.publishModrinth].each {
             it.finalizedBy project.tasks.refreshUpdateJson
