@@ -12,5 +12,5 @@ configurations {
 
 dependencies {
     // Fabric Loader
-    modCompileOnly libs.fabric.loader
+    compileOnly libs.fabric.loader
 }
