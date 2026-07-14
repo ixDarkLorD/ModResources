@@ -1,4 +1,5 @@
 apply plugin: "com.hypherionmc.modutils.modpublisher"
+apply plugin: "com.github.johnrengelman.shadow"
 
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
