@@ -1,0 +1,16 @@
+architectury {
+    common helper.loaderNames()
+}
+
+loom {
+    accessWidenerPath = project(":common").file("src/main/resources/${modid}.accesswidener")
+}
+
+configurations {
+    shadowCommon
+}
+
+dependencies {
+    // Fabric Loader
+    modCompileOnly libs.fabric.loader
+}

@@ -1,0 +1,19 @@
+architectury {
+    common helper.loaderNames()
+}
+
+def accessWidener = file("src/main/resources/${modid}.accesswidener")
+if (accessWidener.exists()) {
+    loom {
+        accessWidenerPath = accessWidener
+    }
+}
+
+configurations {
+    shadowCommon
+}
+
+dependencies {
+    // Fabric Loader (through Loom's mod configuration when Minecraft is remapped)
+    add(rootProject.loomRemap ? "modCompileOnly" : "compileOnly", libs.fabric.loader)
+}

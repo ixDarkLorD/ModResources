@@ -1,0 +1,68 @@
+// The jar chain of a loader project when Minecraft is remapped (1.x, see loomRemap in main.gradle), applied by the
+// loader scripts: the dev jar and the common classes are shadowed together, and remapJar turns that into the published
+// jar (no classifier).
+def commonProject = helper.commonProject()
+def accessWidener = commonProject.loom.accessWidenerPath
+
+jar {
+    archiveClassifier = "dev"
+}
+
+shadowJar {
+    exclude 'architectury.common.json'
+    if (loom.isForgeLike()) exclude 'fabric.mod.json'
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = "dev-shadow"
+}
+
+remapJar {
+    inputFile = shadowJar.archiveFile
+    dependsOn shadowJar
+    archiveClassifier = null
+
+    if (!loom.isForgeLike()) {
+        injectAccessWidener = true
+    } else if (accessWidener.isPresent()) {
+        atAccessWideners.add(accessWidener.get().asFile.name)
+    }
+}
+
+// Mixin configs name their refmap only in the built jar. The refmaps hold production names, which the dev runs can't
+// use (Architectury remaps a common config's refmap in Forge's dev run, and the mixins then miss their targets), and
+// Loom only fills the name in for configs from the project's own resources, not the common module's or renamed ones.
+// So each config of the jar that has none gets its refmap here: the common module's for the common configs, the
+// project's own for the rest (when the jar has that refmap). Forge-like loaders that run on Mojang names (1.20.5+) need
+// none: their refmaps hold SRG or intermediary names, which would break the mixins there. (Loom's
+// isForgeLikeAndOfficial() is about the dev mappings: it's true for SRG-running 1.20.1 Forge too.)
+remapJar.doLast {
+    def mc = libs.versions.minecraft.get().tokenize(".-").collect { it.isInteger() ? it.toInteger() : 0 }
+    def (major, minor, patch) = [mc[0] ?: 0, mc.size() > 1 ? mc[1] : 0, mc.size() > 2 ? mc[2] : 0]
+    def mojangNamesAtRuntime = major > 1 || minor > 20 || (minor == 20 && patch >= 5)
+    if (loom.isForgeLike() && mojangNamesAtRuntime) return
+    def refmapOf = { String projectName -> "${modid}.${projectName.toLowerCase()}.refmap.json".toString() }
+    def jar = remapJar.archiveFile.get().asFile.toPath()
+    java.nio.file.FileSystems.newFileSystem(jar, (ClassLoader) null).withCloseable { fs ->
+        java.nio.file.Files.list(fs.getPath("/")).withCloseable { files ->
+            files.toList().findAll { it.fileName.toString().endsWith(".mixins.json") }.each { config ->
+                def json = new groovy.json.JsonSlurper().parse(java.nio.file.Files.newBufferedReader(config))
+                if (!(json instanceof Map) || json.containsKey("refmap")) return
+                def refmap = refmapOf(config.fileName.toString().contains(".common.") ? commonProject.name : project.name)
+                if (!java.nio.file.Files.exists(fs.getPath(refmap))) return
+                json.put("refmap", refmap)
+                java.nio.file.Files.writeString(config, groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(json)))
+            }
+        }
+    }
+}
+
+sourcesJar {
+    def commonSources = commonProject.sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}

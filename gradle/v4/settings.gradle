@@ -1,0 +1,40 @@
+// v4: needs a shared catalog that brings the Gradle plugins too (net.ixdarklord:sharedcatalogs 26.1.2-v2 or later).
+// A project's own settings.gradle only has to apply this file:
+//     apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/settings.gradle"
+// Repositories for the plugins the catalog brings (a top-level pluginManagement block is only allowed in the
+// project's own settings.gradle).
+settings.pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = "https://maven.architectury.dev/" }
+        maven { url = "https://maven.fabricmc.net/" }
+        maven { url = "https://maven.neoforged.net/releases/" }
+        maven { url = "https://maven.minecraftforge.net/" }
+        maven { url = "https://maven.firstdark.dev/releases" }
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        // A local ModResources checkout (mod_resources=<path>) is looked at first, so unpushed catalogs resolve too.
+        def localResources = providers.gradleProperty("mod_resources").getOrNull()
+        if (localResources != null && new File(localResources, "maven").isDirectory()) {
+            maven {
+                name = "Local Mod Resources"
+                url = new File(localResources, "maven").toURI()
+            }
+        }
+        maven {
+            name = "Dark Mod Resources"
+            url = "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/maven/"
+        }
+    }
+    versionCatalogs {
+        libs {
+            from("net.ixdarklord:sharedcatalogs:${dependencies_catalog_version}")
+        }
+    }
+}
+
+// Named after the folder the project is in.
+rootProject.name = settingsDir.name

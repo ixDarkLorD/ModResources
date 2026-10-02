@@ -1,0 +1,125 @@
+apply plugin: "com.github.johnrengelman.shadow"
+
+architectury {
+    platformSetupLoomIde()
+    forge()
+}
+
+sourceSets.main.resources { srcDir file("src/generated/resources") }
+
+loom {
+    accessWidenerPath = project(":common").loom.accessWidenerPath
+
+    forge {
+        convertAccessWideners = true
+        extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
+        
+        if (project(":common").file("src/main/resources/${modid}.common.mixins.json").exists() || project(":common").file("src/main/resources/common.mixins.json").exists()) {
+            mixinConfig "${modid}.common.mixins.json"
+        }
+        if (project.file("src/main/resources/${modid}.forge.mixins.json").exists() || project.file("src/main/resources/forge.mixins.json").exists()) {
+            mixinConfig "${modid}.forge.mixins.json"
+        }
+    }
+
+    runs {
+        configureEach {
+            ideConfigGenerated(true)
+            runDir("../run")
+            vmArgs "-Xms${runtime_min_ram}", "-Xmx${runtime_max_ram}"
+            property "log4j2.configurationFile", 'https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v2/log4j.xml'
+            property 'mixin.debug.export', mixin_debug
+            property 'terminal.ansi', 'true'
+        }
+        client {
+            client()
+            setConfigName("Forge Client ${libs.versions.minecraft.get()}")
+            programArgs("--username", "Player####")
+        }
+        server {
+            server()
+            setConfigName("Forge Server ${libs.versions.minecraft.get()}")
+            runDir("../run/server")
+        }
+        data {
+            data()
+            setConfigName("Forge Data ${libs.versions.minecraft.get()}")
+            programArgs("--all", "--mod", modid)
+            programArgs("--existing", project(":common").file("src/main/resources").absolutePath)
+            programArgs("--output", file("src/generated/resources").absolutePath)
+        }
+    }
+}
+
+configurations {
+    common
+    shadowCommon
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentForge.extendsFrom common
+}
+
+configurations.configureEach {
+    resolutionStrategy {
+        force "net.sf.jopt-simple:jopt-simple:5.0.4"
+    }
+}
+
+repositories {
+    maven {
+        name = "Minecraft Forge"
+        url = "https://maven.minecraftforge.net/"
+    }
+    maven {
+        name = "TheIllusiveC4"
+        url = "https://maven.theillusivec4.top/"
+    }
+}
+
+dependencies {
+    // Common Project
+    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
+    shadowCommon(project(path: ':common', configuration: 'transformProductionForge')) { transitive = false }
+
+    // Minecraft Forge
+    forge libs.minecraftforge.loader
+
+    // Mixin Extras
+    compileOnly(annotationProcessor(libs.mixinextras.common.get()))
+    implementation libs.mixinextras.forge
+}
+
+tasks.withType(Jar).configureEach {
+    exclude "architectury.common.json"
+}
+
+shadowJar {
+    exclude 'fabric.mod.json'
+    exclude 'architectury.common.json'
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = "dev-shadow"
+}
+
+remapJar {
+    inputFile = shadowJar.archiveFile
+    dependsOn shadowJar
+    archiveClassifier.set(null)
+}
+
+jar {
+    archiveClassifier.set('dev')
+}
+
+sourcesJar {
+    def commonSources = project(":common").sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}
+
+[tasks.publishMod, tasks.publishCurseforge, tasks.publishModrinth, tasks.publishGitHub].each { it.finalizedBy project.tasks.refreshUpdateJson }

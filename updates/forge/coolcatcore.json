@@ -1,0 +1,9 @@
+{
+    "homepage": "https://legacy.curseforge.com/minecraft/mc-mods/coolcatlib",
+    "promos": {
+        "1.20.1-latest": "2001.2.0.0",
+        "1.20.1-recommended": "2001.2.0.0",
+        "1.21.1-latest": "2100.2.0.0",
+        "1.21.1-recommended": "2100.2.0.0"
+    }
+}

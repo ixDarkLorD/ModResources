@@ -1,0 +1,152 @@
+apply plugin: "com.gradleup.shadow"
+
+def commonProject = helper.commonProject()
+
+architectury {
+    platformSetupLoomIde()
+    forge()
+}
+
+sourceSets.main.resources { srcDir file("src/generated/resources") }
+
+loom {
+    accessWidenerPath = commonProject.loom.accessWidenerPath
+
+    forge {
+        if (commonProject.loom.accessWidenerPath.isPresent()) {
+            convertAccessWideners = true
+            extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
+        }
+
+        if (commonProject.file("src/main/resources/${modid}.common.mixins.json").exists() || commonProject.file("src/main/resources/common.mixins.json").exists()) {
+            mixinConfig "${modid}.common.mixins.json"
+        }
+        if (project.file("src/main/resources/${modid}.forge.mixins.json").exists() || project.file("src/main/resources/forge.mixins.json").exists()) {
+            mixinConfig "${modid}.forge.mixins.json"
+        }
+    }
+
+    runs {
+        configureEach {
+            ideConfigGenerated(true)
+            runDir(helper.runDir("run"))
+            vmArgs "-Xms${runtime_min_ram}", "-Xmx${runtime_max_ram}"
+            property "log4j2.configurationFile", 'https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v2/log4j.xml'
+            property 'mixin.debug.export', mixin_debug
+            property 'terminal.ansi', 'true'
+        }
+        client {
+            client()
+            setConfigName("Forge Client ${libs.versions.minecraft.get()}")
+            programArgs("--username", "Player####")
+        }
+        server {
+            server()
+            setConfigName("Forge Server ${libs.versions.minecraft.get()}")
+            runDir(helper.runDir("run/server"))
+        }
+        data {
+            data()
+            setConfigName("Forge Data ${libs.versions.minecraft.get()}")
+            programArgs("--all", "--mod", modid)
+            programArgs("--existing", commonProject.file("src/main/resources").absolutePath)
+            programArgs("--output", file("src/generated/resources").absolutePath)
+        }
+    }
+}
+
+configurations {
+    common
+    shadowCommon
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentForge.extendsFrom common
+}
+
+configurations.configureEach {
+    resolutionStrategy {
+        force "net.sf.jopt-simple:jopt-simple:5.0.4"
+    }
+}
+
+repositories {
+    maven {
+        name = "Minecraft Forge"
+        url = "https://maven.minecraftforge.net/"
+    }
+    maven {
+        name = "TheIllusiveC4"
+        url = "https://maven.theillusivec4.top/"
+    }
+}
+
+dependencies {
+    // Common Project
+    common(rootProject.loomRemap ? project(path: commonProject.path, configuration: "namedElements") : project(commonProject.path)) { transitive false }
+    shadowCommon(project(path: commonProject.path, configuration: "transformProductionForge")) { transitive = false }
+
+    // Minecraft Forge
+    forge libs.minecraftforge.loader
+
+    // Mixin Extras
+    compileOnly(annotationProcessor(libs.mixinextras.common.get()))
+    implementation(include(libs.mixinextras.forge.get()))
+}
+
+tasks.withType(Jar).configureEach {
+    exclude "architectury.common.json"
+}
+
+// Architectury's transformer already puts the common project's dev jar into this mod's dev module; Forge would load the
+// classpath copy as a second (generated) module exporting the same packages and refuse to start.
+tasks.matching { it.name.startsWith("run") }.configureEach {
+    classpath = classpath.filter { !(it.name.endsWith("-dev.jar") && it.parentFile.name == "devlibs") }
+}
+
+[tasks.publishMod, tasks.publishCurseforge, tasks.publishModrinth, tasks.publishGitHub].each { it.finalizedBy project.tasks.refreshUpdateJson }
+
+if (rootProject.loomRemap) {
+    apply from: "${rootProject.sharedScripts}/remap.gradle"
+    return
+}
+
+// Step 1: raw jar (Loom-processed)
+jar {
+    archiveClassifier = "raw"
+}
+
+// Step 2: shadowJar becomes the main artifact, built on top of the raw jar
+shadowJar {
+    dependsOn(jar)
+    mainSpec.sourcePaths.clear()
+    from(zipTree(jar.archiveFile))
+
+    exclude 'fabric.mod.json'
+    exclude 'architectury.common.json'
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = null
+}
+
+sourcesJar {
+    def commonSources = commonProject.sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+// Step 3: redirect published variants (.module metadata) to shadowJar
+configurations {
+    apiElements {
+        outgoing.artifacts.clear()
+        outgoing.artifact(shadowJar)
+    }
+    runtimeElements {
+        outgoing.artifacts.clear()
+        outgoing.artifact(shadowJar)
+    }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}

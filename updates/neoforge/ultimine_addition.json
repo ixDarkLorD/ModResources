@@ -1,0 +1,11 @@
+{
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/ultimine-addition",
+    "promos": {
+        "1.21-latest": "1.1.2",
+        "1.21-recommended": "1.1.2",
+        "1.21.1-latest": "2101.2.0.1",
+        "1.21.1-recommended": "2101.2.0.1",
+        "26.1.2-latest": "26.1.2-2",
+        "26.1.2-recommended": "26.1.2-2"
+    }
+}
