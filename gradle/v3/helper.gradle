@@ -178,78 +178,6 @@ afterEvaluate {
     tasks.findByName('publishModrinth')?.finalizedBy(tasks.named('setModrinthEnvironment'))
 }
 
-// The mod page in the jar's metadata (fabric.mod.json's "homepage", mods.toml's "displayURL", wherever mod_page_url was
-// expanded) points to the platform the jar is uploaded to: each platform whose page isn't mod_page_url gets its own copy
-// of the jar (build/libs/<platform>/, same file name) with the link swapped. A page is mod_<platform>_page_url when set,
-// otherwise mod_page_url when it's already on that platform, otherwise built from the project id.
-String platformPageUrl(String platform) {
-    def page = "${project.findProperty("mod_${platform}_page_url") ?: ''}".toString()
-    if (!page.isEmpty()) return page
-    def modPage = "${project.findProperty('mod_page_url') ?: ''}".toString()
-    if (platform == 'curseforge') {
-        if (modPage.contains('curseforge.com')) return modPage
-        def id = "${project.findProperty('project_curse_id') ?: ''}".toString()
-        return id.isEmpty() ? '' : "https://www.curseforge.com/projects/${id}".toString()
-    }
-    if (modPage.contains('modrinth.com')) return modPage
-    def id = "${project.findProperty('project_modrinth_id') ?: ''}".toString()
-    return id.isEmpty() ? '' : "https://modrinth.com/mod/${id}".toString()
-}
-
-// Replaces text in a whole file (a line filter would change its line endings to the system's).
-class ReplaceTextFilter extends FilterReader {
-    String from = ''
-    String to = ''
-    private final Reader source
-    private Reader replaced
-
-    ReplaceTextFilter(Reader source) {
-        super(source)
-        this.source = source
-    }
-
-    private Reader replaced() {
-        if (replaced == null) replaced = new StringReader(source.text.replace(from, to))
-        return replaced
-    }
-
-    @Override
-    int read() { return replaced().read() }
-
-    @Override
-    int read(char[] buffer, int offset, int length) { return replaced().read(buffer, offset, length) }
-
-    @Override
-    long skip(long count) { return replaced().skip(count) }
-
-    @Override
-    boolean ready() { return replaced().ready() }
-}
-
-def registerPlatformJar(String platform, String taskName, jarTask) {
-    def modPage = "${project.findProperty('mod_page_url') ?: ''}".toString()
-    def page = platformPageUrl(platform)
-    if (modPage.isEmpty() || page.isEmpty() || page == modPage) return null
-    return tasks.register(taskName, Zip) {
-        group = 'publishing'
-        description = "The jar uploaded to ${uppercaseFirstChar(platform)}, its mod page linking there."
-        dependsOn jarTask
-        def jarFile = jarTask.flatMap { it.archiveFile }
-        archiveFileName = jarTask.flatMap { it.archiveFileName }
-        destinationDirectory = layout.buildDirectory.dir("libs/${platform}")
-        inputs.property('page', page)
-        // The manifest stays the first entry, as in a jar
-        from({ zipTree(jarFile) }) { include 'META-INF/MANIFEST.MF' }
-        from({ zipTree(jarFile) }) {
-            exclude 'META-INF/MANIFEST.MF'
-            filteringCharset = 'UTF-8'
-            filesMatching(['fabric.mod.json', 'quilt.mod.json', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml']) {
-                filter([from: modPage, to: page], ReplaceTextFilter)
-            }
-        }
-    }
-}
-
 publisher {
     if (!project_loaders.contains(project.name))
         return
@@ -286,10 +214,6 @@ publisher {
 
     def jarTask = tasks.named(tasks.findByName("remapJar") != null ? "remapJar" : "shadowJar")
     setArtifact(jarTask)
-    def curseforgeJar = registerPlatformJar('curseforge', 'curseforgeJar', jarTask)
-    if (curseforgeJar != null) setPlatformArtifact('curseforge', curseforgeJar)
-    def modrinthJar = registerPlatformJar('modrinth', 'modrinthJar', jarTask)
-    if (modrinthJar != null) setPlatformArtifact('modrinth', modrinthJar)
 
     // Disable the built in Fractureizer scanner
     setDisableMalwareScanner(false)
