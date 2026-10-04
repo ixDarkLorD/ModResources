@@ -1,0 +1,23 @@
+{
+    "homepage": "https://modrinth.com/mod/glazedmenu",
+    "promos": {
+        "1.20-latest": "1.0",
+        "1.20-recommended": "1.0",
+        "1.20.1-latest": "1.0",
+        "1.20.1-recommended": "1.0",
+        "1.21-latest": "1.0",
+        "1.21-recommended": "1.0",
+        "1.21.1-latest": "1.0",
+        "1.21.1-recommended": "1.0",
+        "26.1-latest": "1.0",
+        "26.1-recommended": "1.0",
+        "26.1.1-latest": "1.0",
+        "26.1.1-recommended": "1.0",
+        "26.1.2-latest": "1.0",
+        "26.1.2-recommended": "1.0",
+        "26.2-latest": "1.0",
+        "26.2-recommended": "1.0",
+        "26.3-latest": "1.0",
+        "26.3-recommended": "1.0"
+    }
+}

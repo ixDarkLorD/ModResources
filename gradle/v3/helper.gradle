@@ -101,9 +101,12 @@ tasks.register('copyJarToDir', Copy) {
 }
 
 tasks.register('refreshUpdateJson') {
-    onlyIf { project.loom.isForgeLike() && project.hasProperty('mod_resources') }
+    onlyIf { project.hasProperty('mod_resources') }
     doLast {
-        def updateFile = file(project.findProperty('mod_resources').concat(File.separator).concat('updates').concat(File.separator).concat(project.loom.isNeoForge() ? 'neoforge' : 'forge').concat(File.separator).concat("${modid}").concat('.json'))
+        // One file per loader: Forge and NeoForge read theirs natively, Fabric's is read by mods that look for one
+        // (Glazed Menu, through the "update_json" custom value in fabric.mod.json).
+        def updateLoader = project.loom.isNeoForge() ? 'neoforge' : project.loom.isForge() ? 'forge' : 'fabric'
+        def updateFile = file(project.findProperty('mod_resources').concat(File.separator).concat('updates').concat(File.separator).concat(updateLoader).concat(File.separator).concat("${modid}").concat('.json'))
         // The version the mod reports: plain build numbers ("1") are shown as "<mc>-<build>"
         def promoVersion = "${mod_version}".contains('.') ? "${mod_version}" : "${libs.versions.minecraft.get()}-${mod_version}"
         def updateJson

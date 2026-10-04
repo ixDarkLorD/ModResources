@@ -248,7 +248,8 @@ subprojects {
         if (libs.versions.properties.any { String key = it.key; return key.contains("fabric") }) {
             resourceProperties = resourceProperties + [
                     min_fabric_version: libs.versions.fabricloader.min.get(),
-                    min_fabric_api_version: libs.versions.fabricapi.min.get()
+                    min_fabric_api_version: libs.versions.fabricapi.min.get(),
+                    mod_fabric_update_url: (project.findProperty('mod_fabric_update_url') ?: '')
             ]
         }
 
@@ -372,7 +373,7 @@ subprojects {
     if (helper.isLoaderProject())
         build.finalizedBy project.tasks.copyJarToDir
 
-    if (helper.isLoaderProject() && loom.isForgeLike()) {
+    if (helper.isLoaderProject()) {
         [tasks.publishCurseforge, tasks.publishModrinth].each {
             it.finalizedBy project.tasks.refreshUpdateJson
         }
