@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ModResources Maven</title>
+<meta name="description" content="ixDarkLorD's Maven: CoolCatLib, Folios and the shared build catalogs, free to build against without a token.">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">ixDarkLorD's Maven</p>
+    <h1>ModResources Maven</h1>
+    <p class="lead">The APIs of CoolCatLib, Folios and the other mods, for your own mods to build against. Public, and no
+      token needed.</p>
+    <div class="repo"><code id="url">{{URL}}</code><button class="copy" data-copy="#url">Copy</button></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <h2>Add the repository</h2>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="groovy">build.gradle</button>
+      <button role="tab" aria-selected="false" data-tab="kotlin">build.gradle.kts</button>
+    </div>
+    <pre class="snippet"><button class="copy" data-copy="#repo-code">Copy</button><code id="repo-code"></code></pre>
+    <p class="note">Then pick a version below to copy its dependency line. On Fabric with Loom remapping (1.21.1 and
+      older), use <code>modImplementation</code> for the loader jars.</p>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>Artifacts</h2>
+      <input class="find" id="find" type="search" placeholder="Filter: coolcatlib, folios, 1.21.1…" aria-label="Filter artifacts">
+    </div>
+    <div id="list"></div>
+  </section>
+
+  <p class="foot">Built {{BUILT}} from <a href="https://github.com/ixDarkLorD/ModResources">ixDarkLorD/ModResources</a>.
+    <a href="maven/">Browse every file</a>.</p>
+</main>
+
+<script>
+const URL_ = document.getElementById('url').textContent;
+const ARTIFACTS = {{ARTIFACTS}};
+const REPO = {
+  groovy: `repositories {\n    maven {\n        name = "ModResources"\n        url = "${URL_}"\n    }\n}`,
+  kotlin: `repositories {\n    maven("${URL_}") {\n        name = "ModResources"\n    }\n}`,
+};
+let lang = 'groovy';
+try { lang = localStorage.getItem('mr-lang') || lang; } catch (e) {}
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const dep = (a, v) => lang === 'kotlin' ? `implementation("${a.group}:${a.artifact}:${v}")` : `implementation "${a.group}:${a.artifact}:${v}"`;
+const day = d => d ? new Date(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+
+function render() {
+  document.getElementById('repo-code').textContent = REPO[lang];
+  document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === lang));
+  const q = document.getElementById('find').value.trim().toLowerCase();
+  const shown = ARTIFACTS.filter(a => !q || `${a.group}:${a.artifact} ${a.versions.join(' ')}`.toLowerCase().includes(q));
+  const list = document.getElementById('list');
+  if (!shown.length) { list.innerHTML = '<p class="empty">Nothing matches.</p>'; return; }
+  let html = '', group = null;
+  shown.forEach((a, i) => {
+    if (a.group !== group) { html += (group ? '</div>' : '') + `<p class="group">${esc(a.group)}</p><div class="cards">`; group = a.group; }
+    const pick = a.pick || a.latest[0];
+    html += `<article class="card" data-i="${ARTIFACTS.indexOf(a)}">
+      <h3>${esc(a.artifact)}</h3>
+      <div class="meta">${a.count} version${a.count === 1 ? '' : 's'} · updated ${esc(day(a.updated))}</div>
+      <div class="chips">${a.latest.map(v => `<button aria-pressed="${v === pick}" data-v="${esc(v)}">${esc(v)}</button>`).join('')}</div>
+      <div class="dep"><code>${esc(dep(a, pick))}</code><button class="copy" data-dep>Copy</button></div>
+      <footer><span class="meta">Newest for each Minecraft version</span><a href="maven/${esc(a.path)}">All files →</a></footer>
+    </article>`;
+  });
+  list.innerHTML = html + '</div>';
+}
+
+document.addEventListener('click', e => {
+  const tab = e.target.closest('[data-tab]');
+  if (tab) { lang = tab.dataset.tab; try { localStorage.setItem('mr-lang', lang); } catch (err) {} render(); return; }
+  const chip = e.target.closest('.chips button');
+  if (chip) { ARTIFACTS[chip.closest('.card').dataset.i].pick = chip.dataset.v; render(); return; }
+  const copy = e.target.closest('.copy');
+  if (copy) {
+    const text = copy.dataset.copy ? document.querySelector(copy.dataset.copy).textContent : copy.previousElementSibling.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      copy.textContent = 'Copied'; copy.classList.add('done');
+      setTimeout(() => { copy.textContent = 'Copy'; copy.classList.remove('done'); }, 1400);
+    });
+  }
+});
+document.getElementById('find').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
