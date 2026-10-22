@@ -3,13 +3,14 @@
   <groupId>net.ixdarklord.folios</groupId>
   <artifactId>folios-neoforge</artifactId>
   <versioning>
-    <latest>26.2+1.0</latest>
-    <release>26.2+1.0</release>
+    <latest>1.21.1+1.0</latest>
+    <release>1.21.1+1.0</release>
     <versions>
       <version>26.1.2+1.0</version>
       <version>26.3+1.0</version>
       <version>26.2+1.0</version>
+      <version>1.21.1+1.0</version>
     </versions>
-    <lastUpdated>20261022083001</lastUpdated>
+    <lastUpdated>20261022083306</lastUpdated>
   </versioning>
 </metadata>
