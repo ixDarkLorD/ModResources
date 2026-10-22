@@ -1,13 +1,13 @@
 {
     "homepage": "https://www.curseforge.com/minecraft/mc-mods/coolcatlib-canvas",
     "promos": {
-        "1.21.1-latest": "2100.1.0.0",
-        "1.21.1-recommended": "2100.1.0.0",
-        "26.1-latest": "26.1.2-3",
-        "26.1-recommended": "26.1.2-3",
-        "26.1.1-latest": "26.1.2-3",
-        "26.1.1-recommended": "26.1.2-3",
-        "26.1.2-latest": "26.1.2-3",
-        "26.1.2-recommended": "26.1.2-3"
+        "1.21.1-latest": "2100.1.1.0",
+        "1.21.1-recommended": "2100.1.1.0",
+        "26.1-latest": "26.1.2-5",
+        "26.1-recommended": "26.1.2-5",
+        "26.1.1-latest": "26.1.2-5",
+        "26.1.1-recommended": "26.1.2-5",
+        "26.1.2-latest": "26.1.2-5",
+        "26.1.2-recommended": "26.1.2-5"
     }
 }
