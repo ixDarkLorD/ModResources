@@ -11,7 +11,8 @@ allprojects {
     }
 
     group = "$mod_maven_group.$modid"
-    version = "${libs.versions.minecraft.get()}-$mod_version"
+    // <mod version>+<minecraft>, as 8.0.0+26.1.2: every loader compares the mod's version, the Minecraft one is a label.
+    version = "$mod_version+${libs.versions.minecraft.get()}"
 
     repositories {
         mavenCentral()

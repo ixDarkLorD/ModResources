@@ -107,8 +107,8 @@ tasks.register('refreshUpdateJson') {
         // (Glazed Menu, through the "update_json" custom value in fabric.mod.json).
         def updateLoader = project.loom.isNeoForge() ? 'neoforge' : project.loom.isForge() ? 'forge' : 'fabric'
         def updateFile = file(project.findProperty('mod_resources').concat(File.separator).concat('updates').concat(File.separator).concat(updateLoader).concat(File.separator).concat("${modid}").concat('.json'))
-        // The version the mod reports: plain build numbers ("1") are shown as "<mc>-<build>"
-        def promoVersion = "${mod_version}".contains('.') ? "${mod_version}" : "${libs.versions.minecraft.get()}-${mod_version}"
+        // The version the mod reports in its metadata (<mod version>+<minecraft>)
+        def promoVersion = "${project.version}"
         def updateJson
         if (updateFile.exists() && updateFile.canRead() && updateFile.length() != 0) {
             updateJson = new JsonSlurper().parseText(updateFile.text)
@@ -202,9 +202,8 @@ publisher {
     setVersionType(project_release_type)
     setChangelog(changelogSection(file("../CHANGELOG.md")))
 
-    // Versions like "26.1.2-1" already start with the Minecraft version
-    def mcPrefix = "${libs.versions.minecraft.get()}-"
-    setProjectVersion("${project.version}".startsWith(mcPrefix) ? "${project.version}" : "${mcPrefix}${project.version}")
+    // <mod version>+<minecraft>, as the mod's metadata says
+    setProjectVersion("${project.version}")
     setDisplayName("[${project.hasProperty("platform_name") ? project.findProperty("platform_name") : uppercaseFirstChar(project.name)}] ${libs.versions.minecraft.get()} | V${mod_version} " + uppercaseString("${project_release_type}"))
     setGameVersions(project_game_versions.split(','))
     setLoaders(project.name)
@@ -244,11 +243,11 @@ publisher {
 }
 
 // The changelog text uploaded with a release: only the section of the version being published (its "## v<version> ..."
-// heading down to the next "## " heading), not the whole file. Headings name the version as v<minecraft>-<mod_version>
-// (26.1.2-1) or, in older changelogs, v<mod_version> (2101.1.2.4). Fails when the changelog has no such section, so a
-// release never goes out with the wrong notes.
+// heading down to the next "## " heading), not the whole file. Headings name the version as v<mod_version> (8.0.0),
+// v<mod_version>+<minecraft> (8.0.0+26.1.2) or, in older changelogs, v<minecraft>-<mod_version> (26.1.2-1). Fails when
+// the changelog has no such section, so a release never goes out with the wrong notes.
 String changelogSection(File file) {
-    def versions = ["${libs.versions.minecraft.get()}-${mod_version}".toString(), "${mod_version}".toString()]
+    def versions = ["${mod_version}".toString(), "${project.version}".toString(), "${libs.versions.minecraft.get()}-${mod_version}".toString()]
     def lines = file.readLines("UTF-8")
     def matches = { String line -> line.startsWith("## ") && versions.any { v -> line =~ /(^|\s)v?${Pattern.quote(v)}(\s|$)/ } }
     int start = lines.findIndexOf { matches(it) }
