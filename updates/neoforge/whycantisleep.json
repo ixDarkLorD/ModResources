@@ -1,0 +1,17 @@
+{
+    "homepage": "https://github.com/ixDarkLorD/WhyCantISleep",
+    "promos": {
+        "26.1-latest": "0.1.0+26.1.2",
+        "26.1-recommended": "0.1.0+26.1.2",
+        "26.1.1-latest": "0.1.0+26.1.2",
+        "26.1.1-recommended": "0.1.0+26.1.2",
+        "26.1.2-latest": "0.1.0+26.1.2",
+        "26.1.2-recommended": "0.1.0+26.1.2",
+        "26.2-latest": "0.1.0+26.2",
+        "26.2-recommended": "0.1.0+26.2",
+        "26.3-latest": "0.1.0+26.3",
+        "26.3-recommended": "0.1.0+26.3",
+        "1.21.1-latest": "0.1.0+1.21.1",
+        "1.21.1-recommended": "0.1.0+1.21.1"
+    }
+}
