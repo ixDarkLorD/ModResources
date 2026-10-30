@@ -3,8 +3,8 @@
   <groupId>net.ixdarklord.folios</groupId>
   <artifactId>folios-forge</artifactId>
   <versioning>
-    <latest>3.1.1+1.20.1</latest>
-    <release>3.1.1+1.20.1</release>
+    <latest>3.1.1+1.21.1</latest>
+    <release>3.1.1+1.21.1</release>
     <versions>
       <version>1.20.1+1.0</version>
       <version>1.21.1+1.0</version>
@@ -15,7 +15,8 @@
       <version>1.21.1+2.1.1</version>
       <version>1.20.1+2.1.1</version>
       <version>3.1.1+1.20.1</version>
+      <version>3.1.1+1.21.1</version>
     </versions>
-    <lastUpdated>20261030112026</lastUpdated>
+    <lastUpdated>20261030112114</lastUpdated>
   </versioning>
 </metadata>
