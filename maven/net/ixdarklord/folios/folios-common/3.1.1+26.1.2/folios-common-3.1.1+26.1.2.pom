@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>net.ixdarklord.folios</groupId>
+  <artifactId>folios-common</artifactId>
+  <version>3.1.1+26.1.2</version>
+  <name>Folios [common]</name>
+  <description>Guide books for mods, written as JSON in a resource pack: a book on the screen or held open in your hands, with recipes, builds, quests and more.</description>
+  <url>https://github.com/ixDarkLorD/Folios</url>
+  <licenses>
+    <license>
+      <name>LicenseRef-Folios-License</name>
+      <url>https://spdx.org/licenses/LicenseRef-Folios-License.html</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>ixdarklord</id>
+      <name>ixDarkLorD</name>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git://github.com/ixDarkLorD/Folios.git</connection>
+    <developerConnection>scm:git:git@github.com:ixDarkLorD/Folios.git</developerConnection>
+    <url>https://github.com/ixDarkLorD/Folios</url>
+  </scm>
+  <issueManagement>
+    <system>github</system>
+    <url>https://github.com/ixDarkLorD/Folios/issues</url>
+  </issueManagement>
+</project>
