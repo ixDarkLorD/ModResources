@@ -6,91 +6,253 @@
 <title>ModResources Maven</title>
 <meta name="description" content="ixDarkLorD's Maven: CoolCatLib, Folios and the shared build catalogs, free to build against without a token.">
 <link rel="stylesheet" href="site.css">
+<script>try { const t = localStorage.getItem('mr-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body>
-<header class="hero">
-  <div class="wrap">
-    <p class="eyebrow">ixDarkLorD's Maven</p>
-    <h1>ModResources Maven</h1>
-    <p class="lead">The APIs of CoolCatLib, Folios and the other mods, for your own mods to build against. Public, and no
-      token needed.</p>
-    <div class="repo"><code id="url">{{URL}}</code><button class="copy" data-copy="#url">Copy</button></div>
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="brand" href="./"><span class="mark" aria-hidden="true"></span>ModResources <span>Maven</span></a>
+    <nav>
+      <a href="maven/">Browse files</a>
+      <a href="https://github.com/ixDarkLorD/ModResources">GitHub</a>
+      <button class="theme" type="button" aria-label="Switch between light and dark"></button>
+    </nav>
   </div>
 </header>
 
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">ixDarkLorD's Maven</p>
+    <h1>Build against CoolCatLib, Folios and the rest.</h1>
+    <p class="lead">The mods' APIs, the shared version catalogs and the Gradle plugins. Public, and no token needed:
+      pick your build tool, add the repository, copy the line.</p>
+    <div class="repo"><span class="repo-label">Repository</span><code id="url">{{URL}}</code><button class="copy" data-copy="#url">Copy</button></div>
+  </div>
+</section>
+
 <main class="wrap">
-  <section>
-    <h2>Add the repository</h2>
-    <div class="tabs" role="tablist">
-      <button role="tab" aria-selected="true" data-tab="groovy">build.gradle</button>
-      <button role="tab" aria-selected="false" data-tab="kotlin">build.gradle.kts</button>
+  <section aria-labelledby="setup-h">
+    <div class="step-head">
+      <span class="step">1</span>
+      <div>
+        <h2 id="setup-h">Your build tool</h2>
+        <p class="sub">Every snippet on this page follows what you pick here.</p>
+      </div>
     </div>
-    <pre class="snippet"><button class="copy" data-copy="#repo-code">Copy</button><code id="repo-code"></code></pre>
-    <p class="note">Then pick a version below to copy its dependency line. On Fabric with Loom remapping (1.21.1 and
-      older), use <code>modImplementation</code> for the loader jars.</p>
+    <div class="tools" id="tools" role="radiogroup" aria-label="Build tool"></div>
+    <div class="dsl" id="dsl" role="radiogroup" aria-label="Build script language">
+      <button role="radio" data-dsl="groovy">Groovy <small>build.gradle</small></button>
+      <button role="radio" data-dsl="kotlin">Kotlin <small>build.gradle.kts</small></button>
+    </div>
   </section>
 
-  <section>
-    <div class="head">
-      <h2>Artifacts</h2>
-      <input class="find" id="find" type="search" placeholder="Filter: coolcatlib, folios, 1.21.1…" aria-label="Filter artifacts">
+  <section aria-labelledby="repo-h">
+    <div class="step-head">
+      <span class="step">2</span>
+      <div>
+        <h2 id="repo-h">Add the repository</h2>
+        <p class="sub" id="repo-where"></p>
+      </div>
     </div>
-    <div id="list"></div>
+    <div class="code"><div class="code-bar"><span id="repo-file"></span><button class="copy" data-copy="#repo-code">Copy</button></div><pre><code id="repo-code"></code></pre></div>
   </section>
 
-  <p class="foot">Built {{BUILT}} from <a href="https://github.com/ixDarkLorD/ModResources">ixDarkLorD/ModResources</a>.
-    <a href="maven/">Browse every file</a>.</p>
+  <section aria-labelledby="proj-h">
+    <div class="step-head">
+      <span class="step">3</span>
+      <div class="grow">
+        <h2 id="proj-h">Add a dependency</h2>
+        <p class="sub">Pick a Minecraft version and copy the snippet.</p>
+      </div>
+      <input class="find" id="find" type="search" placeholder="Filter: coolcatlib, 1.21.1…" aria-label="Filter projects">
+    </div>
+    <div id="list" class="projects"></div>
+  </section>
+
+  <p class="foot">Built {{BUILT}} from <a href="https://github.com/ixDarkLorD/ModResources">ixDarkLorD/ModResources</a> ·
+    <a href="maven/">Browse every file</a></p>
 </main>
 
 <script>
 const URL_ = document.getElementById('url').textContent;
-const ARTIFACTS = {{ARTIFACTS}};
-const REPO = {
-  groovy: `repositories {\n    maven {\n        name = "ModResources"\n        url = "${URL_}"\n    }\n}`,
-  kotlin: `repositories {\n    maven("${URL_}") {\n        name = "ModResources"\n    }\n}`,
-};
-let lang = 'groovy';
-try { lang = localStorage.getItem('mr-lang') || lang; } catch (e) {}
+const PROJECTS = {{PROJECTS}};
+const LOADER = { common: 'Common', fabric: 'Fabric', forge: 'Forge', neoforge: 'NeoForge' };
+const KIND = { mod: 'Mod API', library: 'Library', plugin: 'Gradle plugin', catalog: 'Version catalog' };
+
+// The build tools: which loader's jar each takes and the configuration it's added with. Jars for Minecraft 1.21.1 and
+// older are remapped by the plugin (the mod… configurations); 26.x is unobfuscated, so the plain ones do.
+const TOOLS = [
+  { id: 'fabric-loom', name: 'Fabric Loom', hint: 'Fabric', loader: 'fabric', conf: mc => remapped(mc) ? 'modImplementation' : 'implementation' },
+  { id: 'arch-loom', name: 'Architectury Loom', hint: 'Multi-loader', multi: true },
+  { id: 'mdg', name: 'ModDevGradle', hint: 'NeoForge', loader: 'neoforge', conf: () => 'implementation' },
+  { id: 'mdg-legacy', name: 'MDG Legacy', hint: 'Forge', loader: 'forge', conf: () => 'modImplementation' },
+  { id: 'forgegradle', name: 'ForgeGradle', hint: 'Forge', loader: 'forge', conf: () => 'implementation', deobf: true },
+  { id: 'neogradle', name: 'NeoGradle', hint: 'NeoForge', loader: 'neoforge', conf: () => 'implementation' },
+  { id: 'gradle', name: 'Gradle', hint: 'Plain, any loader', pick: true, conf: () => 'implementation' },
+  { id: 'maven', name: 'Maven', hint: 'pom.xml', pick: true, maven: true },
+];
+const remapped = mc => /^1\./.test(mc);
+
+const state = { tool: 'fabric-loom', dsl: 'groovy' };
+try { Object.assign(state, JSON.parse(localStorage.getItem('mr-setup') || '{}')); } catch (e) {}
+if (!TOOLS.some(t => t.id === state.tool)) state.tool = 'fabric-loom';
+const tool = () => TOOLS.find(t => t.id === state.tool);
+const kts = () => state.dsl === 'kotlin';
+const save = () => { try { localStorage.setItem('mr-setup', JSON.stringify({ tool: state.tool, dsl: state.dsl })); } catch (e) {} };
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const dep = (a, v) => lang === 'kotlin' ? `implementation("${a.group}:${a.artifact}:${v}")` : `implementation "${a.group}:${a.artifact}:${v}"`;
 const day = d => d ? new Date(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
 
+// A little colour: comments, strings, XML tags and the Gradle block names.
+const KEYWORDS = '\\b(repositories|dependencies|maven|plugins|id|version|pluginManagement|dependencyResolutionManagement|versionCatalogs|create|from|libs|gradlePluginPortal|url|name|fg\\.deobf)\\b';
+function highlight(code) {
+  const re = new RegExp(`(\\/\\/[^\\n]*)|("[^"\\n]*")|(<\\/?[\\w.-]+>)|${KEYWORDS}`, 'g');
+  let out = '', last = 0, m;
+  while ((m = re.exec(code))) {
+    out += esc(code.slice(last, m.index)) + `<span class="${m[1] ? 'c' : m[2] ? 's' : m[3] ? 't' : 'k'}">${esc(m[0])}</span>`;
+    last = re.lastIndex;
+  }
+  return out + esc(code.slice(last));
+}
+
+const indent = text => text.split('\n').map(l => l && '    ' + l).join('\n');
+const block = (name, body) => `${name} {\n${indent(body)}\n}`;
+const call = (conf, arg) => kts() ? `${conf}(${arg})` : `${conf} ${arg}`;
+const gradleFile = () => kts() ? 'build.gradle.kts' : 'build.gradle';
+const repoBlock = () => kts() ? `maven("${URL_}") {\n    name = "ModResources"\n}` : `maven {\n    name = "ModResources"\n    url = "${URL_}"\n}`;
+const pom = (group, artifact, v) => `<dependency>\n  <groupId>${group}</groupId>\n  <artifactId>${artifact}</artifactId>\n  <version>${v}</version>\n</dependency>`;
+
+function repository() {
+  const t = tool();
+  if (t.maven) return { file: 'pom.xml', where: 'Inside <project>, next to your other repositories.',
+    code: `<repositories>\n  <repository>\n    <id>modresources</id>\n    <url>${URL_}</url>\n  </repository>\n</repositories>` };
+  const where = t.multi ? `In the root ${gradleFile()}, inside subprojects { }, so every loader's project sees it.`
+    : `In ${gradleFile()}, next to your other repositories.`;
+  return { file: gradleFile(), where, code: block('repositories', repoBlock()) };
+}
+
+// The version shown for one of a project's artifacts: the one picked, if that artifact has it, else its newest.
+function versionOf(p, art) {
+  const list = art.byMc[p.mc] || [];
+  return list.includes(p.version) ? p.version : list[0];
+}
+
+// The loader shown for a mod: the build tool's, else the one picked on the card, else the first with a build.
+function loaderOf(p) {
+  const t = tool();
+  if (t.loader) return t.loader;
+  if (p.loader && p.artifacts[p.loader]?.byMc[p.mc]) return p.loader;
+  return Object.keys(p.artifacts).find(l => p.artifacts[l].byMc[p.mc]);
+}
+
+function modSnippet(p) {
+  const t = tool(), mc = p.mc;
+  const coord = a => `"${p.group}:${a.artifact}:${versionOf(p, a)}"`;
+  if (t.multi) {
+    return { code: Object.entries(p.artifacts).filter(([, a]) => a.byMc[mc]).map(([loader, a]) => {
+      const conf = loader === 'common' ? (remapped(mc) ? 'modCompileOnly' : 'compileOnly') : (remapped(mc) ? 'modImplementation' : 'implementation');
+      return `// ${loader}/${gradleFile()}\n` + block('dependencies', call(conf, coord(a)));
+    }).join('\n\n') };
+  }
+  const loader = loaderOf(p), art = p.artifacts[loader];
+  if (!art || !art.byMc[mc]) return { missing: `No ${LOADER[loader]} build for Minecraft ${mc}. Pick another version or build tool.` };
+  if (t.maven) return { code: pom(p.group, art.artifact, versionOf(p, art)) };
+  if (t.deobf && remapped(mc)) return { code: block('dependencies', call('implementation', `fg.deobf(${coord(art)})`)) };
+  return { code: block('dependencies', call(loader === 'common' ? 'compileOnly' : t.conf(mc), coord(art))) };
+}
+
+function otherSnippet(p) {
+  const t = tool(), art = p.artifacts[''], v = versionOf(p, art), ext = kts() ? '.kts' : '';
+  if (p.kind === 'catalog') {
+    if (t.maven) return { missing: 'Version catalogs are a Gradle feature.' };
+    const from = `from("${p.group}:${art.artifact}:${v}")`;
+    return { code: `// settings.gradle${ext}\n` + block('dependencyResolutionManagement',
+      block('repositories', repoBlock()) + '\n' + block('versionCatalogs', block(kts() ? 'create("libs")' : 'libs', from))) };
+  }
+  if (p.kind === 'plugin') {
+    if (t.maven) return { missing: 'This is a Gradle plugin.' };
+    return { code: `// settings.gradle${ext}\n` + block('pluginManagement', block('repositories', 'gradlePluginPortal()\n' + repoBlock()))
+      + `\n\n// build.gradle${ext}\n` + block('plugins', kts() ? `id("${p.plugin}") version "${v}"` : `id "${p.plugin}" version "${v}"`) };
+  }
+  if (t.maven) return { code: pom(p.group, art.artifact, v) };
+  return { code: block('dependencies', call('implementation', `"${p.group}:${art.artifact}:${v}"`)) };
+}
+
+function card(p, i) {
+  const t = tool(), mod = p.kind === 'mod';
+  // The Minecraft versions the build tool's loader has a build for; until one is picked, the newest of them.
+  const has = mc => !mod || !t.loader || !!p.artifacts[t.loader]?.byMc[mc];
+  if (!p.picked || !p.mcs.includes(p.mc)) p.mc = p.mcs.find(has) || p.mcs[0];
+  const snip = mod ? modSnippet(p) : otherSnippet(p);
+  const loader = mod && !t.multi ? loaderOf(p) : '';
+  const art = !mod ? p.artifacts[''] : t.multi ? Object.values(p.artifacts).find(a => a.byMc[p.mc]) : p.artifacts[loader];
+  const versions = art?.byMc[p.mc] || [];
+  const picked = art ? versionOf(p, art) : '';
+  const file = snip.code?.startsWith('// settings') ? '' : t.maven ? 'pom.xml' : t.multi ? '' : gradleFile();
+  const loaders = !mod ? '' : t.pick
+    ? `<div class="seg">${Object.keys(p.artifacts).map(l => `<button aria-pressed="${l === loader}" data-loader="${l}" ${p.artifacts[l].byMc[p.mc] ? '' : 'disabled'}>${LOADER[l]}</button>`).join('')}</div>`
+    : `<div class="pills">${Object.keys(p.artifacts).map(l => `<span class="pill${p.artifacts[l].byMc[p.mc] ? '' : ' off'}${l === loader ? ' on' : ''}">${LOADER[l]}</span>`).join('')}</div>`;
+  return `<article class="proj" data-i="${i}">
+    <header>
+      <div class="title">
+        <h3>${esc(p.name)}</h3><span class="kind ${p.kind}">${KIND[p.kind]}</span>
+        <p class="meta"><code>${esc(p.group)}</code><span>${p.count} version${p.count === 1 ? '' : 's'}</span><span>Updated ${esc(day(p.updated))}</span></p>
+      </div>
+      <a class="files-link" href="maven/${esc(p.path)}">Files <span aria-hidden="true">→</span></a>
+    </header>
+    <div class="opts">${!p.mcs[0] && !loaders && versions.length < 2 ? '<p class="meta">One version, nothing to pick.</p>' : ''}
+      ${p.mcs[0] ? `<div class="opt"><span class="label">Minecraft</span><div class="chips">${p.mcs.map(mc =>
+        `<button aria-pressed="${mc === p.mc}" data-mc="${esc(mc)}"${has(mc) ? '' : ' class="dim"'}>${esc(mc)}</button>`).join('')}</div></div>` : ''}
+      ${loaders ? `<div class="opt"><span class="label">${t.pick ? 'Loader' : 'Builds'}</span>${loaders}</div>` : ''}
+      ${versions.length > 1 ? `<div class="opt"><span class="label">Version</span><select data-version aria-label="${esc(p.name)} version">${versions.map((v, n) =>
+        `<option value="${esc(v)}"${v === picked ? ' selected' : ''}>${esc(v)}${n === 0 ? ' · newest' : ''}</option>`).join('')}</select></div>` : ''}
+    </div>
+    ${snip.missing ? `<p class="missing">${esc(snip.missing)}</p>`
+      : `<div class="code"><div class="code-bar"><span>${file}</span><button class="copy">Copy</button></div><pre><code>${highlight(snip.code)}</code></pre></div>`}
+  </article>`;
+}
+
 function render() {
-  document.getElementById('repo-code').textContent = REPO[lang];
-  document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === lang));
+  const t = tool();
+  document.getElementById('tools').innerHTML = TOOLS.map(x =>
+    `<button role="radio" aria-checked="${x.id === state.tool}" data-tool="${x.id}"><b>${x.name}</b><small>${x.hint}</small></button>`).join('');
+  const dsl = document.getElementById('dsl');
+  dsl.hidden = !!t.maven;
+  dsl.querySelectorAll('[data-dsl]').forEach(b => b.setAttribute('aria-checked', b.dataset.dsl === state.dsl));
+  const repo = repository();
+  document.getElementById('repo-file').textContent = repo.file;
+  document.getElementById('repo-where').textContent = repo.where;
+  document.getElementById('repo-code').innerHTML = highlight(repo.code);
+
   const q = document.getElementById('find').value.trim().toLowerCase();
-  const shown = ARTIFACTS.filter(a => !q || `${a.group}:${a.artifact} ${a.versions.join(' ')}`.toLowerCase().includes(q));
-  const list = document.getElementById('list');
-  if (!shown.length) { list.innerHTML = '<p class="empty">Nothing matches.</p>'; return; }
-  let html = '', group = null;
-  shown.forEach((a, i) => {
-    if (a.group !== group) { html += (group ? '</div>' : '') + `<p class="group">${esc(a.group)}</p><div class="cards">`; group = a.group; }
-    const pick = a.pick || a.latest[0];
-    html += `<article class="card" data-i="${ARTIFACTS.indexOf(a)}">
-      <h3>${esc(a.artifact)}</h3>
-      <div class="meta">${a.count} version${a.count === 1 ? '' : 's'} · updated ${esc(day(a.updated))}</div>
-      <div class="chips">${a.latest.map(v => `<button aria-pressed="${v === pick}" data-v="${esc(v)}">${esc(v)}</button>`).join('')}</div>
-      <div class="dep"><code>${esc(dep(a, pick))}</code><button class="copy" data-dep>Copy</button></div>
-      <footer><span class="meta">Newest for each Minecraft version</span><a href="maven/${esc(a.path)}">All files →</a></footer>
-    </article>`;
-  });
-  list.innerHTML = html + '</div>';
+  const shown = PROJECTS.map((p, i) => [p, i]).filter(([p]) => !q || [p.name, p.group, KIND[p.kind], ...p.mcs,
+    ...Object.values(p.artifacts).map(a => a.artifact)].join(' ').toLowerCase().includes(q));
+  document.getElementById('list').innerHTML = shown.length ? shown.map(([p, i]) => card(p, i)).join('') : '<p class="empty">Nothing matches.</p>';
 }
 
 document.addEventListener('click', e => {
-  const tab = e.target.closest('[data-tab]');
-  if (tab) { lang = tab.dataset.tab; try { localStorage.setItem('mr-lang', lang); } catch (err) {} render(); return; }
-  const chip = e.target.closest('.chips button');
-  if (chip) { ARTIFACTS[chip.closest('.card').dataset.i].pick = chip.dataset.v; render(); return; }
-  const copy = e.target.closest('.copy');
-  if (copy) {
-    const text = copy.dataset.copy ? document.querySelector(copy.dataset.copy).textContent : copy.previousElementSibling.textContent;
+  const el = e.target.closest('button');
+  if (!el) return;
+  const p = PROJECTS[el.closest('.proj')?.dataset.i];
+  if (el.dataset.tool) { state.tool = el.dataset.tool; save(); render(); }
+  else if (el.dataset.dsl) { state.dsl = el.dataset.dsl; save(); render(); }
+  else if (el.dataset.mc && p) { p.mc = el.dataset.mc; p.picked = true; render(); }
+  else if (el.dataset.loader && p) { p.loader = el.dataset.loader; render(); }
+  else if (el.classList.contains('theme')) {
+    const dark = getComputedStyle(document.documentElement).getPropertyValue('--scheme').trim() === 'dark';
+    document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('mr-theme', document.documentElement.dataset.theme); } catch (err) {}
+  } else if (el.classList.contains('copy')) {
+    const text = el.dataset.copy ? document.querySelector(el.dataset.copy).textContent : el.closest('.code').querySelector('code').textContent;
     navigator.clipboard.writeText(text).then(() => {
-      copy.textContent = 'Copied'; copy.classList.add('done');
-      setTimeout(() => { copy.textContent = 'Copy'; copy.classList.remove('done'); }, 1400);
+      el.textContent = 'Copied'; el.classList.add('done');
+      setTimeout(() => { el.textContent = 'Copy'; el.classList.remove('done'); }, 1400);
     });
   }
+});
+document.addEventListener('change', e => {
+  const p = PROJECTS[e.target.closest('.proj')?.dataset.i];
+  if (p && e.target.matches('[data-version]')) { p.version = e.target.value; render(); }
 });
 document.getElementById('find').addEventListener('input', render);
 render();
