@@ -26,6 +26,7 @@
     <h1>Build against CoolCatLib, Folios and the rest.</h1>
     <p class="lead">The mods' APIs, the shared version catalogs and the Gradle plugins. Public, and no token needed:
       pick your build tool, add the repository, copy the line.</p>
+    <p class="stats" id="stats"></p>
     <div class="repo"><span class="repo-label">Repository</span><code id="url">{{URL}}</code><button class="copy" data-copy="#url">Copy</button></div>
   </div>
 </section>
@@ -79,19 +80,26 @@ const PROJECTS = {{PROJECTS}};
 const LOADER = { common: 'Common', fabric: 'Fabric', forge: 'Forge', neoforge: 'NeoForge' };
 const KIND = { mod: 'Mod API', library: 'Library', plugin: 'Gradle plugin', catalog: 'Version catalog' };
 
-// The build tools: which loader's jar each takes and the configuration it's added with. Jars for Minecraft 1.21.1 and
-// older are remapped by the plugin (the mod… configurations); 26.x is unobfuscated, so the plain ones do.
-const TOOLS = [
-  { id: 'fabric-loom', name: 'Fabric Loom', hint: 'Fabric', loader: 'fabric', conf: mc => remapped(mc) ? 'modImplementation' : 'implementation' },
-  { id: 'arch-loom', name: 'Architectury Loom', hint: 'Multi-loader', multi: true },
-  { id: 'mdg', name: 'ModDevGradle', hint: 'NeoForge', loader: 'neoforge', conf: () => 'implementation' },
-  { id: 'mdg-legacy', name: 'MDG Legacy', hint: 'Forge', loader: 'forge', conf: () => 'modImplementation' },
-  { id: 'forgegradle', name: 'ForgeGradle', hint: 'Forge', loader: 'forge', conf: () => 'implementation', deobf: true },
-  { id: 'neogradle', name: 'NeoGradle', hint: 'NeoForge', loader: 'neoforge', conf: () => 'implementation' },
-  { id: 'gradle', name: 'Gradle', hint: 'Plain, any loader', pick: true, conf: () => 'implementation' },
-  { id: 'maven', name: 'Maven', hint: 'pom.xml', pick: true, maven: true },
-];
+// The build tools: the loaders' jars each can use (the first is its own) and the line each is added with. Jars for
+// Minecraft 1.21.1 and older are remapped by the plugin (the mod… configurations, fg.deobf); 26.x is unobfuscated, so
+// the plain configurations do. The common jar is compile-only: each loader's jar carries the same classes at runtime.
 const remapped = mc => /^1\./.test(mc);
+const plain = loader => loader === 'common' ? 'compileOnly' : 'implementation';
+const loom = (loader, mc) => remapped(mc) ? (loader === 'common' ? 'modCompileOnly' : 'modImplementation') : plain(loader);
+const LOOM_NOTE = 'Loom remaps jars for 1.21.1 and older, so they go in the mod… configurations.';
+const TOOLS = [
+  { id: 'fabric-loom', name: 'Fabric Loom', hint: 'Fabric', loaders: ['fabric', 'common'], conf: loom, note: mc => remapped(mc) ? LOOM_NOTE : '' },
+  { id: 'arch-loom', name: 'Architectury Loom', hint: 'Multi-loader', loaders: ['common', 'fabric', 'forge', 'neoforge'], multi: true, conf: loom,
+    note: mc => remapped(mc) ? LOOM_NOTE : '' },
+  { id: 'mdg', name: 'ModDevGradle', hint: 'NeoForge', loaders: ['neoforge', 'common'], conf: plain },
+  { id: 'mdg-legacy', name: 'MDG Legacy', hint: 'Forge', loaders: ['forge', 'common'], conf: l => l === 'common' ? 'modCompileOnly' : 'modImplementation',
+    note: () => 'MDG Legacy remaps the jars in its mod… configurations.' },
+  { id: 'forgegradle', name: 'ForgeGradle', hint: 'Forge', loaders: ['forge', 'common'], conf: plain, deobf: true,
+    note: mc => remapped(mc) ? 'fg.deobf remaps the jar to your project\'s mappings.' : '' },
+  { id: 'neogradle', name: 'NeoGradle', hint: 'NeoForge', loaders: ['neoforge', 'common'], conf: plain },
+  { id: 'gradle', name: 'Gradle', hint: 'Any loader', loaders: ['common', 'fabric', 'forge', 'neoforge'], conf: plain },
+  { id: 'maven', name: 'Maven', hint: 'pom.xml', loaders: ['common', 'fabric', 'forge', 'neoforge'], maven: true },
+];
 
 const state = { tool: 'fabric-loom', dsl: 'groovy' };
 try { Object.assign(state, JSON.parse(localStorage.getItem('mr-setup') || '{}')); } catch (e) {}
@@ -120,7 +128,7 @@ const block = (name, body) => `${name} {\n${indent(body)}\n}`;
 const call = (conf, arg) => kts() ? `${conf}(${arg})` : `${conf} ${arg}`;
 const gradleFile = () => kts() ? 'build.gradle.kts' : 'build.gradle';
 const repoBlock = () => kts() ? `maven("${URL_}") {\n    name = "ModResources"\n}` : `maven {\n    name = "ModResources"\n    url = "${URL_}"\n}`;
-const pom = (group, artifact, v) => `<dependency>\n  <groupId>${group}</groupId>\n  <artifactId>${artifact}</artifactId>\n  <version>${v}</version>\n</dependency>`;
+const pom = (group, artifact, v, scope) => `<dependency>\n  <groupId>${group}</groupId>\n  <artifactId>${artifact}</artifactId>\n  <version>${v}</version>${scope ? `\n  <scope>${scope}</scope>` : ''}\n</dependency>`;
 
 function repository() {
   const t = tool();
@@ -137,28 +145,27 @@ function versionOf(p, art) {
   return list.includes(p.version) ? p.version : list[0];
 }
 
-// The loader shown for a mod: the build tool's, else the one picked on the card, else the first with a build.
+// The loader shown on a mod's card: the one picked there, if the build tool can use it and it has a build for the
+// Minecraft version; else the tool's own ('all' of them for Architectury).
 function loaderOf(p) {
   const t = tool();
-  if (t.loader) return t.loader;
-  if (p.loader && p.artifacts[p.loader]?.byMc[p.mc]) return p.loader;
-  return Object.keys(p.artifacts).find(l => p.artifacts[l].byMc[p.mc]);
+  const usable = l => l === 'all' ? !!t.multi : t.loaders.includes(l) && !!p.artifacts[l]?.byMc[p.mc];
+  if (p.loader && usable(p.loader)) return p.loader;
+  return t.multi ? 'all' : t.loaders.find(l => p.artifacts[l]) || Object.keys(p.artifacts)[0];
 }
 
 function modSnippet(p) {
-  const t = tool(), mc = p.mc;
+  const t = tool(), mc = p.mc, loader = loaderOf(p);
   const coord = a => `"${p.group}:${a.artifact}:${versionOf(p, a)}"`;
-  if (t.multi) {
-    return { code: Object.entries(p.artifacts).filter(([, a]) => a.byMc[mc]).map(([loader, a]) => {
-      const conf = loader === 'common' ? (remapped(mc) ? 'modCompileOnly' : 'compileOnly') : (remapped(mc) ? 'modImplementation' : 'implementation');
-      return `// ${loader}/${gradleFile()}\n` + block('dependencies', call(conf, coord(a)));
-    }).join('\n\n') };
+  const line = (l, a) => t.deobf && remapped(mc) ? call(plain(l), `fg.deobf(${coord(a)})`) : call(t.conf(l, mc), coord(a));
+  if (loader === 'all') {
+    return { code: Object.entries(p.artifacts).filter(([, a]) => a.byMc[mc]).map(([l, a]) =>
+      `// ${l}/${gradleFile()}\n` + block('dependencies', line(l, a))).join('\n\n') };
   }
-  const loader = loaderOf(p), art = p.artifacts[loader];
-  if (!art || !art.byMc[mc]) return { missing: `No ${LOADER[loader]} build for Minecraft ${mc}. Pick another version or build tool.` };
-  if (t.maven) return { code: pom(p.group, art.artifact, versionOf(p, art)) };
-  if (t.deobf && remapped(mc)) return { code: block('dependencies', call('implementation', `fg.deobf(${coord(art)})`)) };
-  return { code: block('dependencies', call(loader === 'common' ? 'compileOnly' : t.conf(mc), coord(art))) };
+  const art = p.artifacts[loader];
+  if (!art?.byMc[mc]) return { missing: `No ${LOADER[loader]} build for Minecraft ${mc}. Pick another Minecraft version, or another build tool above.` };
+  if (t.maven) return { code: pom(p.group, art.artifact, versionOf(p, art), loader === 'common' ? 'provided' : '') };
+  return { code: (t.multi ? `// ${loader}/${gradleFile()}\n` : '') + block('dependencies', line(loader, art)) };
 }
 
 function otherSnippet(p) {
@@ -178,44 +185,56 @@ function otherSnippet(p) {
   return { code: block('dependencies', call('implementation', `"${p.group}:${art.artifact}:${v}"`)) };
 }
 
+const HUES = [218, 262, 160, 28, 330, 190];
+const hue = name => HUES[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % HUES.length];
+
 function card(p, i) {
   const t = tool(), mod = p.kind === 'mod';
-  // The Minecraft versions the build tool's loader has a build for; until one is picked, the newest of them.
-  const has = mc => !mod || !t.loader || !!p.artifacts[t.loader]?.byMc[mc];
+  // Until a Minecraft version is picked, the newest the build tool's own loader has a build for.
+  const has = mc => !mod || !!t.multi || !!p.artifacts[t.loaders[0]]?.byMc[mc];
   if (!p.picked || !p.mcs.includes(p.mc)) p.mc = p.mcs.find(has) || p.mcs[0];
   const snip = mod ? modSnippet(p) : otherSnippet(p);
-  const loader = mod && !t.multi ? loaderOf(p) : '';
-  const art = !mod ? p.artifacts[''] : t.multi ? Object.values(p.artifacts).find(a => a.byMc[p.mc]) : p.artifacts[loader];
+  const loader = mod ? loaderOf(p) : '';
+  const art = !mod ? p.artifacts[''] : loader === 'all' ? Object.values(p.artifacts).find(a => a.byMc[p.mc]) : p.artifacts[loader];
   const versions = art?.byMc[p.mc] || [];
   const picked = art ? versionOf(p, art) : '';
-  const file = snip.code?.startsWith('// settings') ? '' : t.maven ? 'pom.xml' : t.multi ? '' : gradleFile();
-  const loaders = !mod ? '' : t.pick
-    ? `<div class="seg">${Object.keys(p.artifacts).map(l => `<button aria-pressed="${l === loader}" data-loader="${l}" ${p.artifacts[l].byMc[p.mc] ? '' : 'disabled'}>${LOADER[l]}</button>`).join('')}</div>`
-    : `<div class="pills">${Object.keys(p.artifacts).map(l => `<span class="pill${p.artifacts[l].byMc[p.mc] ? '' : ' off'}${l === loader ? ' on' : ''}">${LOADER[l]}</span>`).join('')}</div>`;
-  return `<article class="proj" data-i="${i}">
+  const file = snip.code?.startsWith('// settings') ? 'settings and build script' : t.maven ? 'pom.xml' : loader === 'all' ? 'one block per subproject' : gradleFile();
+  const note = mod && !snip.missing && t.note ? t.note(p.mc) : '';
+
+  const field = (label, body) => `<div class="field"><span class="label">${label}</span>${body}</div>`;
+  const fields = [];
+  if (p.mcs[0]) fields.push(field('Minecraft', `<div class="seg mono">${p.mcs.map(mc =>
+    `<button aria-pressed="${mc === p.mc}" data-mc="${esc(mc)}"${has(mc) ? '' : ' class="dim"'}>${esc(mc)}</button>`).join('')}</div>`));
+  if (mod) fields.push(field('Loader', `<div class="seg">${t.multi ? `<button aria-pressed="${loader === 'all'}" data-loader="all">All</button>` : ''}${Object.keys(p.artifacts).map(l => {
+    const why = !t.loaders.includes(l) ? `${t.name} doesn't use ${LOADER[l]} jars` : !p.artifacts[l].byMc[p.mc] ? `No ${LOADER[l]} build for ${p.mc}` : '';
+    return `<button aria-pressed="${l === loader}" data-loader="${l}"${why ? ` disabled title="${esc(why)}"` : ''}><i class="dot ${l}"></i>${LOADER[l]}</button>`;
+  }).join('')}</div>`));
+  if (versions.length > 1) fields.push(field('Version', `<select data-version aria-label="${esc(p.title)} version">${versions.map((v, n) =>
+    `<option value="${esc(v)}"${v === picked ? ' selected' : ''}>${esc(v)}${n === 0 ? ' (newest)' : ''}</option>`).join('')}</select>`));
+  else if (picked) fields.push(field('Version', `<span class="ver">${esc(picked)}</span>`));
+
+  return `<article class="proj" data-i="${i}" style="--h: ${hue(p.name)}">
     <header>
+      ${p.logo ? `<img class="avatar logo" src="${esc(p.logo)}" alt="" width="48" height="48" loading="lazy">`
+        : `<span class="avatar" aria-hidden="true">${esc(p.title[0].toUpperCase())}</span>`}
       <div class="title">
-        <h3>${esc(p.name)}</h3><span class="kind ${p.kind}">${KIND[p.kind]}</span>
+        <div class="name"><h3>${esc(p.title)}</h3><span class="kind ${p.kind}">${KIND[p.kind]}</span></div>
         <p class="meta"><code>${esc(p.group)}</code><span>${p.count} version${p.count === 1 ? '' : 's'}</span><span>Updated ${esc(day(p.updated))}</span></p>
       </div>
       <a class="files-link" href="maven/${esc(p.path)}">Files <span aria-hidden="true">→</span></a>
     </header>
-    <div class="opts">${!p.mcs[0] && !loaders && versions.length < 2 ? '<p class="meta">One version, nothing to pick.</p>' : ''}
-      ${p.mcs[0] ? `<div class="opt"><span class="label">Minecraft</span><div class="chips">${p.mcs.map(mc =>
-        `<button aria-pressed="${mc === p.mc}" data-mc="${esc(mc)}"${has(mc) ? '' : ' class="dim"'}>${esc(mc)}</button>`).join('')}</div></div>` : ''}
-      ${loaders ? `<div class="opt"><span class="label">${t.pick ? 'Loader' : 'Builds'}</span>${loaders}</div>` : ''}
-      ${versions.length > 1 ? `<div class="opt"><span class="label">Version</span><select data-version aria-label="${esc(p.name)} version">${versions.map((v, n) =>
-        `<option value="${esc(v)}"${v === picked ? ' selected' : ''}>${esc(v)}${n === 0 ? ' · newest' : ''}</option>`).join('')}</select></div>` : ''}
-    </div>
+    <div class="fields">${fields.join('')}</div>
     ${snip.missing ? `<p class="missing">${esc(snip.missing)}</p>`
       : `<div class="code"><div class="code-bar"><span>${file}</span><button class="copy">Copy</button></div><pre><code>${highlight(snip.code)}</code></pre></div>`}
+    ${note ? `<p class="note">${esc(note)}</p>` : ''}
   </article>`;
 }
 
 function render() {
   const t = tool();
   document.getElementById('tools').innerHTML = TOOLS.map(x =>
-    `<button role="radio" aria-checked="${x.id === state.tool}" data-tool="${x.id}"><b>${x.name}</b><small>${x.hint}</small></button>`).join('');
+    `<button role="radio" aria-checked="${x.id === state.tool}" data-tool="${x.id}"><b>${x.name}</b><small><span class="dots">${x.loaders.filter(l => l !== 'common')
+      .map(l => `<i class="dot ${l}"></i>`).join('')}</span>${x.hint}</small></button>`).join('');
   const dsl = document.getElementById('dsl');
   dsl.hidden = !!t.maven;
   dsl.querySelectorAll('[data-dsl]').forEach(b => b.setAttribute('aria-checked', b.dataset.dsl === state.dsl));
@@ -224,8 +243,10 @@ function render() {
   document.getElementById('repo-where').textContent = repo.where;
   document.getElementById('repo-code').innerHTML = highlight(repo.code);
 
+  const total = PROJECTS.reduce((n, p) => n + p.count, 0), mcs = new Set(PROJECTS.flatMap(p => p.mcs).filter(Boolean));
+  document.getElementById('stats').innerHTML = `<span><b>${PROJECTS.length}</b> projects</span><span><b>${total}</b> versions</span><span><b>${mcs.size}</b> Minecraft versions</span>`;
   const q = document.getElementById('find').value.trim().toLowerCase();
-  const shown = PROJECTS.map((p, i) => [p, i]).filter(([p]) => !q || [p.name, p.group, KIND[p.kind], ...p.mcs,
+  const shown = PROJECTS.map((p, i) => [p, i]).filter(([p]) => !q || [p.name, p.title, p.group, KIND[p.kind], ...p.mcs,
     ...Object.values(p.artifacts).map(a => a.artifact)].join(' ').toLowerCase().includes(q));
   document.getElementById('list').innerHTML = shown.length ? shown.map(([p, i]) => card(p, i)).join('') : '<p class="empty">Nothing matches.</p>';
 }

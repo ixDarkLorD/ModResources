@@ -56,13 +56,15 @@ def folder_key(name):
     return (version_key(mc), release_key(name))
 
 
-def packaging(folder, version, artifact):
-    """What the POM says the artifact is: 'jar', 'toml' (a version catalog), 'pom' (a Gradle plugin's marker)…"""
+def pom_info(folder, version, artifact):
+    """What the POM says the artifact is ('jar', 'toml' for a version catalog, 'pom' for a Gradle plugin's marker…)
+    and its name, without the loader the mods add to it ('CoolCatLib [common]' -> 'CoolCatLib')."""
     try:
         pom = ET.parse(os.path.join(folder, version, f'{artifact}-{version}.pom')).getroot()
     except (OSError, ET.ParseError):
-        return 'jar'
-    return pom.findtext('{*}packaging') or pom.findtext('packaging') or 'jar'
+        return 'jar', ''
+    name = re.sub(r'\s*\[[^\]]*\]$', '', pom.findtext('{*}name') or '').strip()
+    return pom.findtext('{*}packaging') or 'jar', name
 
 
 def artifacts():
@@ -84,9 +86,10 @@ def artifacts():
             by_mc.setdefault(split_version(v)[0], []).append(v)
         by_mc = {mc: sorted(by_mc[mc], key=release_key, reverse=True) for mc in sorted(by_mc, key=version_key, reverse=True)}
         newest = next(iter(by_mc.values()))[0]
+        kind, title = pom_info(folder, newest, artifact)
         found.append({
             'group': group, 'artifact': artifact, 'path': os.path.relpath(folder, ROOT).replace(os.sep, '/') + '/',
-            'count': len(versions), 'byMc': by_mc, 'updated': updated[:8], 'packaging': packaging(folder, newest, artifact),
+            'count': len(versions), 'byMc': by_mc, 'updated': updated[:8], 'packaging': kind, 'title': title,
         })
     return sorted(found, key=lambda a: (a['group'], a['artifact']))
 
@@ -103,7 +106,7 @@ def projects(found):
         impl = next((a for a in found if f"{a['group']}.{a['artifact']}" == plugin), None)
         used.update({id(marker), id(impl)})
         main = impl or marker
-        out.append({'name': main['artifact'], 'kind': 'plugin', 'group': main['group'], 'plugin': plugin,
+        out.append({'name': main['artifact'], 'title': marker['title'] or main['title'], 'kind': 'plugin', 'group': main['group'], 'plugin': plugin,
                     'artifacts': {'': main}, 'path': main['path']})
     for a in found:
         if id(a) in used:
@@ -112,18 +115,21 @@ def projects(found):
         if loader in LOADERS and base:
             key = (a['group'], base)
             if key not in mods:
-                mods[key] = {'name': base, 'kind': 'mod', 'group': a['group'], 'artifacts': {},
+                mods[key] = {'name': base, 'title': a['title'], 'kind': 'mod', 'group': a['group'], 'artifacts': {},
                              'path': a['path'].rsplit('/', 2)[0] + '/'}
                 out.append(mods[key])
             mods[key]['artifacts'][loader] = a
         else:
-            out.append({'name': a['artifact'], 'kind': 'catalog' if a['packaging'] == 'toml' else 'library',
+            out.append({'name': a['artifact'], 'title': a['title'], 'kind': 'catalog' if a['packaging'] == 'toml' else 'library',
                         'group': a['group'], 'artifacts': {'': a}, 'path': a['path']})
     for p in out:
         arts = p['artifacts'].values()
         mcs = {mc for a in arts for mc in a['byMc']}
         p['mcs'] = sorted(mcs, key=version_key, reverse=True)
         p['count'] = sum(a['count'] for a in arts)
+        p['title'] = p['title'] or next((a['title'] for a in arts if a['title']), '') or p['name']
+        # A logo of its own, if the site has one (logos/<name>.png, the mod's mod_logo.png).
+        p['logo'] = f"logos/{p['name']}.png" if os.path.exists(os.path.join(HERE, 'logos', p['name'] + '.png')) else ''
         p['updated'] = max(a['updated'] for a in arts)
         p['artifacts'] = {k: {'artifact': a['artifact'], 'byMc': a['byMc']}
                           for k, a in sorted(p['artifacts'].items(), key=lambda kv: (kv[0] not in LOADERS, LOADERS.index(kv[0]) if kv[0] in LOADERS else 0))}
@@ -199,6 +205,7 @@ def main():
         with open(os.path.join(OUT, folder, 'index.html'), 'w', encoding='utf-8') as f:
             f.write(listing(folder))
     shutil.copy(os.path.join(HERE, 'site.css'), os.path.join(OUT, 'site.css'))
+    shutil.copytree(os.path.join(HERE, 'logos'), os.path.join(OUT, 'logos'))
     found = projects(artifacts())
     front = open(os.path.join(HERE, 'index.html'), encoding='utf-8').read()
     front = front.replace('{{URL}}', URL).replace('{{PROJECTS}}', json.dumps(found).replace('</', '<\\/'))
