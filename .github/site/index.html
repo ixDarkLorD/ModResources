@@ -32,15 +32,14 @@
 </section>
 
 <main class="wrap">
-  <section aria-labelledby="setup-h">
+  <section aria-labelledby="repo-h">
     <div class="step-head">
       <span class="step">1</span>
       <div>
-        <h2 id="setup-h">Your build tool</h2>
-        <p class="sub">Every snippet on this page follows what you pick here.</p>
+        <h2 id="repo-h">Add the repository</h2>
+        <p class="sub" id="repo-where"></p>
       </div>
     </div>
-    <div class="tools" id="tools" role="radiogroup" aria-label="Build tool"></div>
     <div class="dsl-row">
     <div class="dsl-head">
       <h3 id="dsl-h">Build script language</h3>
@@ -55,22 +54,12 @@
       <button role="radio" data-dsl="kotlin">Kotlin <small>build.gradle.kts</small></button>
     </div>
     </div>
-  </section>
-
-  <section aria-labelledby="repo-h">
-    <div class="step-head">
-      <span class="step">2</span>
-      <div>
-        <h2 id="repo-h">Add the repository</h2>
-        <p class="sub" id="repo-where"></p>
-      </div>
-    </div>
-    <div class="code"><div class="code-bar"><span id="repo-file"></span><button class="copy" data-copy="#repo-code">Copy</button></div><pre><code id="repo-code"></code></pre></div>
+    <div class="code"><div class="code-bar"><span id="repo-file"></span></div><button class="copy icon" data-copy="#repo-code" aria-label="Copy" data-tip="Copy"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/></svg><svg class="i-done" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button><pre><code id="repo-code"></code></pre></div>
   </section>
 
   <section aria-labelledby="proj-h">
     <div class="step-head">
-      <span class="step">3</span>
+      <span class="step">2</span>
       <div class="grow">
         <h2 id="proj-h">Add a dependency</h2>
         <p class="sub">Open a project, pick a Minecraft version and copy the snippet.</p>
@@ -109,13 +98,13 @@ const plain = loader => loader === 'common' ? 'compileOnly' : 'implementation';
 const loom = (loader, mc) => remapped(mc) ? (loader === 'common' ? 'modCompileOnly' : 'modImplementation') : plain(loader);
 const LOOM_NOTE = 'Loom remaps jars for 1.21.1 and older, so they go in the mod… configurations.';
 const TOOLS = [
-  { id: 'fabric-loom', name: 'Fabric Loom', hint: 'Fabric', loaders: ['fabric', 'common'], conf: loom, note: mc => remapped(mc) ? LOOM_NOTE : '' },
-  { id: 'arch-loom', name: 'Architectury Loom', hint: 'Multi-loader', loaders: ['common', 'fabric', 'forge', 'neoforge'], multi: true, conf: loom,
+  { id: 'fabric-loom', name: 'Fabric Loom', hint: 'Fabric', tip: 'Fabric mods. Uses the Fabric jar (or the common one).', loaders: ['fabric', 'common'], conf: loom, note: mc => remapped(mc) ? LOOM_NOTE : '' },
+  { id: 'arch-loom', name: 'Architectury Loom', hint: 'Multi-loader', tip: 'Multi-loader mods: a common project plus one for each loader. Uses the jars of every loader.', loaders: ['common', 'fabric', 'forge', 'neoforge'], multi: true, conf: loom,
     note: mc => remapped(mc) ? LOOM_NOTE : '' },
-  { id: 'mdg', name: 'ModDevGradle', hint: 'NeoForge', loaders: ['neoforge', 'common'], conf: plain },
-  { id: 'forgegradle', name: 'ForgeGradle', hint: 'Forge', loaders: ['forge', 'common'], conf: plain, deobf: true,
+  { id: 'mdg', name: 'ModDevGradle', hint: 'NeoForge', tip: 'NeoForge mods on ModDevGradle. Uses the NeoForge jar (or the common one).', loaders: ['neoforge', 'common'], conf: plain },
+  { id: 'forgegradle', name: 'ForgeGradle', hint: 'Forge', tip: 'Forge mods. Uses the Forge jar (or the common one).', loaders: ['forge', 'common'], conf: plain, deobf: true,
     note: mc => remapped(mc) ? 'fg.deobf remaps the jar to your project\'s mappings.' : '' },
-  { id: 'neogradle', name: 'NeoGradle', hint: 'NeoForge', loaders: ['neoforge', 'common'], conf: plain },
+  { id: 'neogradle', name: 'NeoGradle', hint: 'NeoForge', tip: 'NeoForge mods on NeoGradle. Uses the NeoForge jar (or the common one).', loaders: ['neoforge', 'common'], conf: plain },
 ];
 
 const state = { tool: 'fabric-loom', dsl: 'groovy', view: 'grid' };
@@ -197,6 +186,8 @@ function otherSnippet(p) {
   return { code: block('dependencies', call('implementation', `"${p.group}:${art.artifact}:${v}"`)) };
 }
 
+const COPY = '<button class="copy icon" aria-label="Copy" data-tip="Copy"><svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/></svg><svg class="i-done" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>';
+
 const HUES = [218, 262, 160, 28, 330, 190];
 const hue = name => HUES[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % HUES.length];
 
@@ -228,6 +219,26 @@ function item(p, i) {
   </button>`;
 }
 
+// The Minecraft versions an artifact has a build for, as a sentence ('1.21.1 and 1.20.1').
+const listing = mcs => mcs.length < 2 ? mcs.join('') : mcs.slice(0, -1).join(', ') + ' and ' + mcs[mcs.length - 1];
+const own = t => LOADER[t.loaders[0]];
+
+// Picking a loader on a card can move the build tool, to one that uses that loader's jar (the loader's own first).
+const toolFor = (t, l) => l === 'all' ? TOOLS.find(x => x.multi)
+  : t.loaders.includes(l) ? t : TOOLS.find(x => x.loaders[0] === l) || TOOLS.find(x => x.loaders.includes(l));
+// A loader with no build for the card's Minecraft version can't be picked.
+const unbuilt = (p, l) => l !== 'all' && !p.artifacts[l].byMc[p.mc];
+
+// Why a loader can't be picked, or what else picking it changes; '' when neither.
+function loaderTip(p, t, l) {
+  if (unbuilt(p, l)) {
+    const mcs = Object.keys(p.artifacts[l].byMc).filter(Boolean);
+    return `${p.title} has no ${LOADER[l]} build for Minecraft ${p.mc}. Its ${LOADER[l]} builds are for ${listing(mcs)}: pick one of those above first.`;
+  }
+  const next = toolFor(t, l);
+  return next === t ? '' : `${t.name} can't use the ${LOADER[l]} jar, so picking it switches the build tool to ${next.name}.`;
+}
+
 function card(p, i) {
   const t = tool(), mod = p.kind === 'mod';
   // Until a Minecraft version is picked, the newest the build tool's own loader has a build for.
@@ -243,17 +254,34 @@ function card(p, i) {
 
   const field = (label, body) => `<div class="field"><span class="label">${label}</span>${body}</div>`;
   const fields = [];
-  if (p.mcs[0]) fields.push(field('Minecraft', `<div class="seg mono">${p.mcs.map(mc =>
-    `<button aria-pressed="${mc === p.mc}" data-mc="${esc(mc)}"${has(mc) ? '' : ' class="dim"'}>${esc(mc)}</button>`).join('')}</div>`));
-  if (mod) fields.push(field('Loader', `<div class="seg">${t.multi ? `<button aria-pressed="${loader === 'all'}" data-loader="all">All</button>` : ''}${Object.keys(p.artifacts).map(l => {
-    const why = !t.loaders.includes(l) ? `${t.name} doesn't use ${LOADER[l]} jars` : !p.artifacts[l].byMc[p.mc] ? `No ${LOADER[l]} build for ${p.mc}` : '';
-    return `<button aria-pressed="${l === loader}" data-loader="${l}"${why ? ` disabled title="${esc(why)}"` : ''}><i class="dot ${l}"></i>${LOADER[l]}</button>`;
+  if (p.mcs[0]) fields.push(field('Minecraft', `<div class="seg mono">${p.mcs.map(mc => {
+    const tip = has(mc) ? '' : `${p.title} has no ${own(t)} build for Minecraft ${mc}, so ${t.name} has nothing to use there.`;
+    return `<button aria-pressed="${mc === p.mc}" data-mc="${esc(mc)}"${tip ? ` class="dim" data-tip="${esc(tip)}"` : ''}>${esc(mc)}</button>`;
+  }).join('')}</div>`));
+  // "All" is always there: every loader's jar, one block for each subproject (Architectury's way).
+  const allTip = t.multi ? 'Every loader’s jar, one block for each subproject.'
+    : `Every loader’s jar, one block for each subproject. ${t.name} only uses ${own(t)}’s, so picking it switches the build tool to Architectury Loom.`;
+  if (mod) fields.push(field('Loader', `<div class="seg"><button aria-pressed="${loader === 'all'}" data-loader="all" data-tip="${esc(allTip)}">All</button>${Object.keys(p.artifacts).map(l => {
+    const tip = loaderTip(p, t, l);
+    // aria-disabled rather than disabled, so its tooltip still shows (and it can still be focused to read it).
+    const off = l !== loader && unbuilt(p, l);
+    return `<button aria-pressed="${l === loader}" data-loader="${l}"${off ? ' aria-disabled="true"' : ''}${tip ? ` data-tip="${esc(tip)}"` : ''}><i class="dot ${l}"></i>${LOADER[l]}</button>`;
   }).join('')}</div>`));
   if (versions.length > 1) fields.push(field('Version', `<select data-version aria-label="${esc(p.title)} version">${versions.map((v, n) =>
     `<option value="${esc(v)}"${v === picked ? ' selected' : ''}>${esc(v)}${n === 0 ? ' (newest)' : ''}</option>`).join('')}</select>`));
   else if (picked) fields.push(field('Version', `<span class="ver">${esc(picked)}</span>`));
 
-  return `<article class="proj" id="p-${esc(p.name)}" data-i="${i}" style="--h: ${hue(p.name)}">
+  // The build tool, a small switch right above the snippet (a mod's jars are added differently by each).
+  // Every tool, but only the ones that can use the picked loader's jar can be picked (any of them for the common jar,
+  // Architectury for all of them); the others say why not.
+  const toolTip = x => loader === 'all' ? (x.multi ? '' : `${x.name} uses one loader’s jar, not all of them. Pick ${own(x)} or Common above to use it.`)
+    : x.loaders.includes(loader) ? '' : `${x.name} can’t use the ${LOADER[loader]} jar. Pick ${own(x)}${x.multi ? '' : ' or Common'} above to use it.`;
+  const tools = !mod ? '' : `<div class="tool-row"><span class="label">Build tool</span><div class="seg small" role="radiogroup" aria-label="Build tool">${TOOLS.map(x => {
+    const why = toolTip(x);
+    return `<button role="radio" aria-checked="${x.id === t.id}" data-tool="${x.id}"${why ? ' aria-disabled="true"' : ''} data-tip="${esc(why || x.tip)}">${toolDots(x)}${x.name}</button>`;
+  }).join('')}</div></div>`;
+
+  return `<article class="proj${state.opening ? ' opening' : ''}" id="p-${esc(p.name)}" data-i="${i}" style="--h: ${hue(p.name)}">
     <header>
       ${avatar(p)}
       <div class="title">
@@ -263,11 +291,44 @@ function card(p, i) {
       <a class="files-link" href="maven/${esc(p.path)}">Files <span aria-hidden="true">→</span></a>
     </header>
     <div class="fields">${fields.join('')}</div>
-    ${snip.missing ? `<p class="missing">${esc(snip.missing)}</p>`
-      : `<div class="code"><div class="code-bar"><span>${file}</span><button class="copy">Copy</button></div><pre><code>${highlight(snip.code)}</code></pre></div>`}
-    ${note ? `<p class="note">${esc(note)}</p>` : ''}
+    <div class="snippet">
+      ${tools}
+      ${snip.missing ? `<p class="missing">${esc(snip.missing)}</p>`
+        : `<div class="code"><div class="code-bar"><span>${file}</span></div>${COPY}<pre><code>${highlight(snip.code)}</code></pre></div>`}
+      ${note ? `<p class="note">${esc(note)}</p>` : ''}
+    </div>
   </article>`;
 }
+
+// Tooltips for anything with a data-tip (an unavailable loader or version, a build tool): one floating box, shown
+// on hover or keyboard focus, kept inside the window.
+const floatTip = Object.assign(document.createElement('div'), { id: 'float-tip', className: 'float-tip', role: 'tooltip' });
+document.body.append(floatTip);
+let tipFor = null;
+function showTip(el) {
+  if (tipFor === el) return;
+  hideTip();
+  tipFor = el;
+  floatTip.textContent = el.dataset.tip;
+  floatTip.classList.add('on');
+  el.setAttribute('aria-describedby', 'float-tip');
+  const r = el.getBoundingClientRect(), w = floatTip.offsetWidth, h = floatTip.offsetHeight;
+  const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+  const above = r.top - h - 10 > 64;
+  floatTip.style.left = `${left + scrollX}px`;
+  floatTip.style.top = `${(above ? r.top - h - 10 : r.bottom + 10) + scrollY}px`;
+  floatTip.style.setProperty('--arrow', `${r.left + r.width / 2 - left}px`);
+  floatTip.classList.toggle('below', !above);
+}
+function hideTip() {
+  tipFor?.removeAttribute('aria-describedby');
+  tipFor = null;
+  floatTip.classList.remove('on');
+}
+document.addEventListener('pointerover', e => { const el = e.target.closest('[data-tip]'); el ? showTip(el) : hideTip(); });
+document.addEventListener('focusin', e => { const el = e.target.closest('[data-tip]'); el ? showTip(el) : hideTip(); });
+document.addEventListener('focusout', hideTip);
+addEventListener('scroll', hideTip, { passive: true });
 
 // Search: how well a query matches some texts (2 = one starts with it, 1 = one contains it, -1 = none), and a text with
 // the match marked.
@@ -337,7 +398,10 @@ function findProjects(q) {
 function openProject(i) {
   if (state.open < 0) state.scroll = window.scrollY;
   state.open = i;
+  // Only opening a card plays its animation, not each redraw as its options change.
+  state.opening = true;
   render();
+  state.opening = false;
   document.querySelector('#list > .back')?.scrollIntoView({ block: 'start' });
 }
 
@@ -350,9 +414,8 @@ function closeProject() {
 }
 
 function render() {
+  hideTip();
   const t = tool();
-  document.getElementById('tools').innerHTML = TOOLS.map(x =>
-    `<button role="radio" aria-checked="${x.id === state.tool}" data-tool="${x.id}"><b>${x.name}</b><small>${toolDots(x)}${x.hint}</small></button>`).join('');
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-checked', b.dataset.view === state.view));
   document.querySelectorAll('[data-dsl]').forEach(b => b.setAttribute('aria-checked', b.dataset.dsl === state.dsl));
   const repo = repository();
@@ -366,7 +429,7 @@ function render() {
   const shown = PROJECTS.map((p, i) => [p, i]).filter(([p]) => !q || [p.name, p.title, p.group, KIND[p.kind], ...p.mcs,
     ...Object.values(p.artifacts).map(a => a.artifact)].join(' ').toLowerCase().includes(q));
   const list = document.getElementById('list');
-  list.className = `projects ${state.view}`;
+  list.className = `projects ${state.view}${PROJECTS[state.open] ? ' opened' : ''}`;
   // An open project takes the place of the whole grid or list, with a way back to it.
   if (PROJECTS[state.open]) {
     list.innerHTML = `<button class="back" data-close><span class="chev left" aria-hidden="true"></span>All projects</button>` + card(PROJECTS[state.open], state.open);
@@ -377,7 +440,7 @@ function render() {
 
 document.addEventListener('click', e => {
   const el = e.target.closest('button');
-  if (!el) return;
+  if (!el || el.getAttribute('aria-disabled') === 'true') return;
   const p = PROJECTS[el.closest('.proj')?.dataset.i];
   if (el.dataset.open) openProject(+el.dataset.open);
   else if (el.hasAttribute('data-close')) closeProject();
@@ -385,7 +448,13 @@ document.addEventListener('click', e => {
   else if (el.dataset.tool) { state.tool = el.dataset.tool; save(); render(); }
   else if (el.dataset.dsl) { state.dsl = el.dataset.dsl; save(); render(); }
   else if (el.dataset.mc && p) { p.mc = el.dataset.mc; p.picked = true; render(); }
-  else if (el.dataset.loader && p) { p.loader = el.dataset.loader; render(); }
+  else if (el.dataset.loader && p) {
+    const l = el.dataset.loader, next = toolFor(tool(), l);
+    if (next.id !== state.tool) { state.tool = next.id; save(); }
+    p.picked = true;
+    p.loader = l;
+    render();
+  }
   else if (el.classList.contains('theme')) {
     const dark = getComputedStyle(document.documentElement).getPropertyValue('--scheme').trim() === 'dark';
     document.documentElement.dataset.theme = dark ? 'light' : 'dark';
@@ -393,8 +462,16 @@ document.addEventListener('click', e => {
   } else if (el.classList.contains('copy')) {
     const text = el.dataset.copy ? document.querySelector(el.dataset.copy).textContent : el.closest('.code').querySelector('code').textContent;
     navigator.clipboard.writeText(text).then(() => {
-      el.textContent = 'Copied'; el.classList.add('done');
-      setTimeout(() => { el.textContent = 'Copy'; el.classList.remove('done'); }, 1400);
+      // The icon buttons swap to a tick; the text one (the repository's address) says so.
+      const icon = el.classList.contains('icon');
+      if (icon) { el.setAttribute('aria-label', 'Copied'); el.dataset.tip = 'Copied'; if (tipFor === el) floatTip.textContent = 'Copied'; }
+      else el.textContent = 'Copied';
+      el.classList.add('done');
+      setTimeout(() => {
+        if (icon) { el.setAttribute('aria-label', 'Copy'); el.dataset.tip = 'Copy'; if (tipFor === el) floatTip.textContent = 'Copy'; }
+        else el.textContent = 'Copy';
+        el.classList.remove('done');
+      }, 1400);
     });
   }
 });
