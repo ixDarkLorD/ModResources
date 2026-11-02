@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ModResources Maven</title>
-<meta name="description" content="ixDarkLorD's Maven: CoolCatLib, Folios and the shared build catalogs, free to build against without a token.">
+<meta name="description" content="ixDarkLorD's public Maven repository for Minecraft mod development: mod APIs, version catalogs and Gradle plugins, free to build against without a token.">
 <link rel="stylesheet" href="site.css">
 <script>try { const t = localStorage.getItem('mr-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -23,9 +23,9 @@
 <section class="hero">
   <div class="wrap">
     <p class="eyebrow">ixDarkLorD's Maven</p>
-    <h1>Build against CoolCatLib, Folios and the rest.</h1>
-    <p class="lead">The mods' APIs, the shared version catalogs and the Gradle plugins. Public, and no token needed:
-      pick your build tool, add the repository, copy the line.</p>
+    <h1>Mod APIs, ready to build against.</h1>
+    <p class="lead">A public Maven repository for Minecraft mod development: mod APIs for every loader and Minecraft version,
+      version catalogs and Gradle plugins. No account or token needed: pick your build tool, add the repository, copy the line.</p>
     <p class="stats" id="stats"></p>
     <div class="repo"><span class="repo-label">Repository</span><code id="url">{{URL}}</code><button class="copy" data-copy="#url">Copy</button></div>
   </div>
@@ -41,9 +41,19 @@
       </div>
     </div>
     <div class="tools" id="tools" role="radiogroup" aria-label="Build tool"></div>
-    <div class="dsl" id="dsl" role="radiogroup" aria-label="Build script language">
+    <div class="dsl-row">
+    <div class="dsl-head">
+      <h3 id="dsl-h">Build script language</h3>
+      <span class="help">
+        <button type="button" class="help-icon" aria-label="What's this?" aria-describedby="dsl-tip">?</button>
+        <span class="tip" id="dsl-tip" role="tooltip">Gradle build scripts are written in Groovy (<code>build.gradle</code>) or Kotlin
+          (<code>build.gradle.kts</code>). Pick the one your project's build files use, and every snippet on this page is written in it.</span>
+      </span>
+    </div>
+    <div class="dsl" id="dsl" role="radiogroup" aria-labelledby="dsl-h">
       <button role="radio" data-dsl="groovy">Groovy <small>build.gradle</small></button>
       <button role="radio" data-dsl="kotlin">Kotlin <small>build.gradle.kts</small></button>
+    </div>
     </div>
   </section>
 
@@ -63,9 +73,20 @@
       <span class="step">3</span>
       <div class="grow">
         <h2 id="proj-h">Add a dependency</h2>
-        <p class="sub">Pick a Minecraft version and copy the snippet.</p>
+        <p class="sub">Open a project, pick a Minecraft version and copy the snippet.</p>
       </div>
-      <input class="find" id="find" type="search" placeholder="Filter: coolcatlib, 1.21.1…" aria-label="Filter projects">
+    </div>
+    <div class="list-tools">
+      <div class="search">
+        <input class="find" id="find" type="search" placeholder="Search: CoolCatLib, coolcatlib-fabric, 1.21.1…" autocomplete="off" spellcheck="false"
+          role="combobox" aria-label="Search projects" aria-autocomplete="list" aria-controls="suggest" aria-expanded="false">
+        <kbd class="hotkey" aria-hidden="true">/</kbd>
+        <ul id="suggest" class="suggest" role="listbox" aria-label="Suggestions" hidden></ul>
+      </div>
+      <div class="view" role="radiogroup" aria-label="View">
+        <button role="radio" data-view="grid" title="Grid"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>Grid</button>
+        <button role="radio" data-view="list" title="List"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></svg>List</button>
+      </div>
     </div>
     <div id="list" class="projects"></div>
   </section>
@@ -92,21 +113,19 @@ const TOOLS = [
   { id: 'arch-loom', name: 'Architectury Loom', hint: 'Multi-loader', loaders: ['common', 'fabric', 'forge', 'neoforge'], multi: true, conf: loom,
     note: mc => remapped(mc) ? LOOM_NOTE : '' },
   { id: 'mdg', name: 'ModDevGradle', hint: 'NeoForge', loaders: ['neoforge', 'common'], conf: plain },
-  { id: 'mdg-legacy', name: 'MDG Legacy', hint: 'Forge', loaders: ['forge', 'common'], conf: l => l === 'common' ? 'modCompileOnly' : 'modImplementation',
-    note: () => 'MDG Legacy remaps the jars in its mod… configurations.' },
   { id: 'forgegradle', name: 'ForgeGradle', hint: 'Forge', loaders: ['forge', 'common'], conf: plain, deobf: true,
     note: mc => remapped(mc) ? 'fg.deobf remaps the jar to your project\'s mappings.' : '' },
   { id: 'neogradle', name: 'NeoGradle', hint: 'NeoForge', loaders: ['neoforge', 'common'], conf: plain },
-  { id: 'gradle', name: 'Gradle', hint: 'Any loader', loaders: ['common', 'fabric', 'forge', 'neoforge'], conf: plain },
-  { id: 'maven', name: 'Maven', hint: 'pom.xml', loaders: ['common', 'fabric', 'forge', 'neoforge'], maven: true },
 ];
 
-const state = { tool: 'fabric-loom', dsl: 'groovy' };
+const state = { tool: 'fabric-loom', dsl: 'groovy', view: 'grid' };
 try { Object.assign(state, JSON.parse(localStorage.getItem('mr-setup') || '{}')); } catch (e) {}
 if (!TOOLS.some(t => t.id === state.tool)) state.tool = 'fabric-loom';
+if (state.view !== 'list') state.view = 'grid';
+state.open = -1;
 const tool = () => TOOLS.find(t => t.id === state.tool);
 const kts = () => state.dsl === 'kotlin';
-const save = () => { try { localStorage.setItem('mr-setup', JSON.stringify({ tool: state.tool, dsl: state.dsl })); } catch (e) {} };
+const save = () => { try { localStorage.setItem('mr-setup', JSON.stringify({ tool: state.tool, dsl: state.dsl, view: state.view })); } catch (e) {} };
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const day = d => d ? new Date(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
@@ -128,12 +147,9 @@ const block = (name, body) => `${name} {\n${indent(body)}\n}`;
 const call = (conf, arg) => kts() ? `${conf}(${arg})` : `${conf} ${arg}`;
 const gradleFile = () => kts() ? 'build.gradle.kts' : 'build.gradle';
 const repoBlock = () => kts() ? `maven("${URL_}") {\n    name = "ModResources"\n}` : `maven {\n    name = "ModResources"\n    url = "${URL_}"\n}`;
-const pom = (group, artifact, v, scope) => `<dependency>\n  <groupId>${group}</groupId>\n  <artifactId>${artifact}</artifactId>\n  <version>${v}</version>${scope ? `\n  <scope>${scope}</scope>` : ''}\n</dependency>`;
 
 function repository() {
   const t = tool();
-  if (t.maven) return { file: 'pom.xml', where: 'Inside <project>, next to your other repositories.',
-    code: `<repositories>\n  <repository>\n    <id>modresources</id>\n    <url>${URL_}</url>\n  </repository>\n</repositories>` };
   const where = t.multi ? `In the root ${gradleFile()}, inside subprojects { }, so every loader's project sees it.`
     : `In ${gradleFile()}, next to your other repositories.`;
   return { file: gradleFile(), where, code: block('repositories', repoBlock()) };
@@ -164,29 +180,53 @@ function modSnippet(p) {
   }
   const art = p.artifacts[loader];
   if (!art?.byMc[mc]) return { missing: `No ${LOADER[loader]} build for Minecraft ${mc}. Pick another Minecraft version, or another build tool above.` };
-  if (t.maven) return { code: pom(p.group, art.artifact, versionOf(p, art), loader === 'common' ? 'provided' : '') };
   return { code: (t.multi ? `// ${loader}/${gradleFile()}\n` : '') + block('dependencies', line(loader, art)) };
 }
 
 function otherSnippet(p) {
-  const t = tool(), art = p.artifacts[''], v = versionOf(p, art), ext = kts() ? '.kts' : '';
+  const art = p.artifacts[''], v = versionOf(p, art), ext = kts() ? '.kts' : '';
   if (p.kind === 'catalog') {
-    if (t.maven) return { missing: 'Version catalogs are a Gradle feature.' };
     const from = `from("${p.group}:${art.artifact}:${v}")`;
     return { code: `// settings.gradle${ext}\n` + block('dependencyResolutionManagement',
       block('repositories', repoBlock()) + '\n' + block('versionCatalogs', block(kts() ? 'create("libs")' : 'libs', from))) };
   }
   if (p.kind === 'plugin') {
-    if (t.maven) return { missing: 'This is a Gradle plugin.' };
     return { code: `// settings.gradle${ext}\n` + block('pluginManagement', block('repositories', 'gradlePluginPortal()\n' + repoBlock()))
       + `\n\n// build.gradle${ext}\n` + block('plugins', kts() ? `id("${p.plugin}") version "${v}"` : `id "${p.plugin}" version "${v}"`) };
   }
-  if (t.maven) return { code: pom(p.group, art.artifact, v) };
   return { code: block('dependencies', call('implementation', `"${p.group}:${art.artifact}:${v}"`)) };
 }
 
 const HUES = [218, 262, 160, 28, 330, 190];
 const hue = name => HUES[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % HUES.length];
+
+const avatar = (p, cls = '') => p.logo ? `<img class="avatar logo ${cls}" src="${esc(p.logo)}" alt="" width="48" height="48">`
+  : `<span class="avatar ${cls}" aria-hidden="true">${esc(p.title[0].toUpperCase())}</span>`;
+
+// A project's newest release, and its Minecraft versions as a range ('1.20.1 – 26.3').
+function newest(p) {
+  const art = Object.values(p.artifacts).find(a => a.byMc[p.mcs[0]]);
+  return art ? art.byMc[p.mcs[0]][0] : '';
+}
+const mcRange = p => !p.mcs[0] ? '' : p.mcs.length === 1 ? p.mcs[0] : `${p.mcs[p.mcs.length - 1]} – ${p.mcs[0]}`;
+
+// A closed project: a tile in the grid, a row in the list. Clicking it opens the card.
+function item(p, i) {
+  const loaders = p.kind === 'mod' ? Object.keys(p.artifacts).filter(l => l !== 'common') : [];
+  return `<button class="item" data-open="${i}" style="--h: ${hue(p.name)}" aria-expanded="false" aria-label="Open ${esc(p.title)}">
+    ${avatar(p, 'small')}
+    <span class="item-main">
+      <span class="item-name"><b>${esc(p.title)}</b><span class="kind ${p.kind}">${KIND[p.kind]}</span></span>
+      <code class="item-group">${esc(p.group)}</code>
+    </span>
+    <span class="item-facts">
+      <span class="fact"><small>Newest</small><code>${esc(newest(p))}</code></span>
+      ${p.mcs[0] ? `<span class="fact"><small>Minecraft</small><span>${esc(mcRange(p))}</span></span>` : '<span class="fact none"></span>'}
+      ${loaders.length ? `<span class="fact"><small>Loaders</small><span class="dots">${loaders.map(l => `<i class="dot ${l}" title="${LOADER[l]}"></i>`).join('')}</span></span>` : '<span class="fact none"></span>'}
+    </span>
+    <span class="chev" aria-hidden="true"></span>
+  </button>`;
+}
 
 function card(p, i) {
   const t = tool(), mod = p.kind === 'mod';
@@ -198,7 +238,7 @@ function card(p, i) {
   const art = !mod ? p.artifacts[''] : loader === 'all' ? Object.values(p.artifacts).find(a => a.byMc[p.mc]) : p.artifacts[loader];
   const versions = art?.byMc[p.mc] || [];
   const picked = art ? versionOf(p, art) : '';
-  const file = snip.code?.startsWith('// settings') ? 'settings and build script' : t.maven ? 'pom.xml' : loader === 'all' ? 'one block per subproject' : gradleFile();
+  const file = snip.code?.startsWith('// settings') ? 'settings and build script' : loader === 'all' ? 'one block per subproject' : gradleFile();
   const note = mod && !snip.missing && t.note ? t.note(p.mc) : '';
 
   const field = (label, body) => `<div class="field"><span class="label">${label}</span>${body}</div>`;
@@ -213,10 +253,9 @@ function card(p, i) {
     `<option value="${esc(v)}"${v === picked ? ' selected' : ''}>${esc(v)}${n === 0 ? ' (newest)' : ''}</option>`).join('')}</select>`));
   else if (picked) fields.push(field('Version', `<span class="ver">${esc(picked)}</span>`));
 
-  return `<article class="proj" data-i="${i}" style="--h: ${hue(p.name)}">
+  return `<article class="proj" id="p-${esc(p.name)}" data-i="${i}" style="--h: ${hue(p.name)}">
     <header>
-      ${p.logo ? `<img class="avatar logo" src="${esc(p.logo)}" alt="" width="48" height="48" loading="lazy">`
-        : `<span class="avatar" aria-hidden="true">${esc(p.title[0].toUpperCase())}</span>`}
+      ${avatar(p)}
       <div class="title">
         <div class="name"><h3>${esc(p.title)}</h3><span class="kind ${p.kind}">${KIND[p.kind]}</span></div>
         <p class="meta"><code>${esc(p.group)}</code><span>${p.count} version${p.count === 1 ? '' : 's'}</span><span>Updated ${esc(day(p.updated))}</span></p>
@@ -230,14 +269,92 @@ function card(p, i) {
   </article>`;
 }
 
+// Search: how well a query matches some texts (2 = one starts with it, 1 = one contains it, -1 = none), and a text with
+// the match marked.
+const rank = (q, ...texts) => texts.reduce((best, s) => { s = String(s).toLowerCase(); return Math.max(best, s.startsWith(q) ? 2 : s.includes(q) ? 1 : -1); }, -1);
+function mark(text, q) {
+  const n = q ? text.toLowerCase().indexOf(q) : -1;
+  return n < 0 ? esc(text) : esc(text.slice(0, n)) + `<mark>${esc(text.slice(n, n + q.length))}</mark>` + esc(text.slice(n + q.length));
+}
+const toolDots = x => `<span class="dots">${x.loaders.filter(l => l !== 'common').map(l => `<i class="dot ${l}"></i>`).join('')}</span>`;
+
+// A search box's suggestions: find(query) gives them ({ html, ... }), choose(one) acts on the one picked by click, or by
+// the arrow keys and Enter. Esc closes them, or empties the box when they're closed.
+function suggest(input, box, find, choose) {
+  let items = [], active = -1;
+  const paint = () => {
+    box.hidden = !items.length;
+    input.setAttribute('aria-expanded', String(!box.hidden));
+    box.innerHTML = items.map((it, n) => `<li role="option" id="${box.id}-${n}" data-n="${n}" aria-selected="${n === active}">${it.html}</li>`).join('');
+    if (active >= 0) { input.setAttribute('aria-activedescendant', `${box.id}-${active}`); box.children[active].scrollIntoView({ block: 'nearest' }); }
+    else input.removeAttribute('aria-activedescendant');
+  };
+  const open = () => { items = find(input.value.trim().toLowerCase()).slice(0, 8); active = -1; paint(); };
+  const pick = it => { items = []; active = -1; paint(); choose(it); };
+  input.addEventListener('input', open);
+  input.addEventListener('focus', open);
+  input.addEventListener('blur', () => { items = []; paint(); });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (!items.length) open();
+      if (!items.length) return;
+      active = (active + (e.key === 'ArrowDown' ? 1 : items.length - 1 + (active < 0 ? 1 : 0))) % items.length;
+      paint(); e.preventDefault();
+    } else if (e.key === 'Enter') {
+      if (active >= 0) { e.preventDefault(); pick(items[active]); } else if (items.length === 1) { e.preventDefault(); pick(items[0]); }
+    } else if (e.key === 'Escape') {
+      if (items.length) { items = []; paint(); } else if (input.value) { input.value = ''; input.dispatchEvent(new Event('input')); }
+      e.preventDefault();
+    }
+  });
+  // mousedown, so the box keeps its focus (a blur would close the list before the click lands).
+  box.addEventListener('mousedown', e => { const li = e.target.closest('li'); if (li) { e.preventDefault(); pick(items[li.dataset.n]); } });
+}
+
+function findProjects(q) {
+  const found = [];
+  PROJECTS.forEach((p, i) => {
+    const r = q ? rank(q, p.title, p.name, p.group) : 1;
+    if (r >= 0) found.push({ r, i, html: `${avatar(p, 'tiny')}<span class="s-main">${mark(p.title, q)}</span><small>${KIND[p.kind]}</small>` });
+    if (!q || p.kind !== 'mod') return;
+    Object.entries(p.artifacts).forEach(([l, a]) => {
+      const ra = rank(q, a.artifact);
+      if (ra >= 0) found.push({ r: ra - 0.5, i, loader: l, html: `<i class="dot ${l}"></i><span class="s-main mono">${mark(a.artifact, q)}</span><small>${esc(p.title)} · ${LOADER[l]}</small>` });
+    });
+  });
+  if (q) {
+    const mcs = [...new Set(PROJECTS.flatMap(p => p.mcs).filter(Boolean))];
+    mcs.forEach(mc => {
+      const r = rank(q, mc, 'minecraft ' + mc, 'mc ' + mc);
+      const n = PROJECTS.filter(p => p.mcs.includes(mc)).length;
+      if (r >= 0) found.push({ r: r - 0.25, mc, html: `<span class="mc-badge">MC</span><span class="s-main">Minecraft ${mark(mc, q.replace(/^(minecraft|mc) /, ''))}</span><small>${n} project${n === 1 ? '' : 's'}</small>` });
+    });
+  }
+  return found.sort((a, b) => b.r - a.r);
+}
+
+// Opening a project remembers where the page was scrolled, so going back to all the projects lands there again.
+function openProject(i) {
+  if (state.open < 0) state.scroll = window.scrollY;
+  state.open = i;
+  render();
+  document.querySelector('#list > .back')?.scrollIntoView({ block: 'start' });
+}
+
+function closeProject() {
+  const i = state.open;
+  state.open = -1;
+  render();
+  window.scrollTo({ top: state.scroll ?? 0, behavior: 'instant' });
+  document.querySelector(`[data-open="${i}"]`)?.focus({ preventScroll: true });
+}
+
 function render() {
   const t = tool();
   document.getElementById('tools').innerHTML = TOOLS.map(x =>
-    `<button role="radio" aria-checked="${x.id === state.tool}" data-tool="${x.id}"><b>${x.name}</b><small><span class="dots">${x.loaders.filter(l => l !== 'common')
-      .map(l => `<i class="dot ${l}"></i>`).join('')}</span>${x.hint}</small></button>`).join('');
-  const dsl = document.getElementById('dsl');
-  dsl.hidden = !!t.maven;
-  dsl.querySelectorAll('[data-dsl]').forEach(b => b.setAttribute('aria-checked', b.dataset.dsl === state.dsl));
+    `<button role="radio" aria-checked="${x.id === state.tool}" data-tool="${x.id}"><b>${x.name}</b><small>${toolDots(x)}${x.hint}</small></button>`).join('');
+  document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-checked', b.dataset.view === state.view));
+  document.querySelectorAll('[data-dsl]').forEach(b => b.setAttribute('aria-checked', b.dataset.dsl === state.dsl));
   const repo = repository();
   document.getElementById('repo-file').textContent = repo.file;
   document.getElementById('repo-where').textContent = repo.where;
@@ -248,14 +365,24 @@ function render() {
   const q = document.getElementById('find').value.trim().toLowerCase();
   const shown = PROJECTS.map((p, i) => [p, i]).filter(([p]) => !q || [p.name, p.title, p.group, KIND[p.kind], ...p.mcs,
     ...Object.values(p.artifacts).map(a => a.artifact)].join(' ').toLowerCase().includes(q));
-  document.getElementById('list').innerHTML = shown.length ? shown.map(([p, i]) => card(p, i)).join('') : '<p class="empty">Nothing matches.</p>';
+  const list = document.getElementById('list');
+  list.className = `projects ${state.view}`;
+  // An open project takes the place of the whole grid or list, with a way back to it.
+  if (PROJECTS[state.open]) {
+    list.innerHTML = `<button class="back" data-close><span class="chev left" aria-hidden="true"></span>All projects</button>` + card(PROJECTS[state.open], state.open);
+    return;
+  }
+  list.innerHTML = shown.length ? shown.map(([p, i]) => item(p, i)).join('') : '<p class="empty">Nothing matches.</p>';
 }
 
 document.addEventListener('click', e => {
   const el = e.target.closest('button');
   if (!el) return;
   const p = PROJECTS[el.closest('.proj')?.dataset.i];
-  if (el.dataset.tool) { state.tool = el.dataset.tool; save(); render(); }
+  if (el.dataset.open) openProject(+el.dataset.open);
+  else if (el.hasAttribute('data-close')) closeProject();
+  else if (el.dataset.view) { state.view = el.dataset.view; save(); render(); }
+  else if (el.dataset.tool) { state.tool = el.dataset.tool; save(); render(); }
   else if (el.dataset.dsl) { state.dsl = el.dataset.dsl; save(); render(); }
   else if (el.dataset.mc && p) { p.mc = el.dataset.mc; p.picked = true; render(); }
   else if (el.dataset.loader && p) { p.loader = el.dataset.loader; render(); }
@@ -275,7 +402,25 @@ document.addEventListener('change', e => {
   const p = PROJECTS[e.target.closest('.proj')?.dataset.i];
   if (p && e.target.matches('[data-version]')) { p.version = e.target.value; render(); }
 });
-document.getElementById('find').addEventListener('input', render);
+const find = document.getElementById('find');
+// Searching goes back to all the projects.
+find.addEventListener('input', () => { state.open = -1; render(); });
+suggest(find, document.getElementById('suggest'), findProjects, it => {
+  if (it.mc) {
+    // A Minecraft version: show the projects with a build for it, each on that version.
+    find.value = it.mc;
+    PROJECTS.forEach(p => { if (p.mcs.includes(it.mc)) { p.mc = it.mc; p.picked = true; } });
+    render();
+  } else {
+    find.value = '';
+    if (it.loader) PROJECTS[it.i].loader = it.loader;
+    openProject(it.i);
+  }
+});
+// "/" jumps to the project search, as on many sites.
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && !e.target.closest('input, select, textarea')) { e.preventDefault(); find.focus(); }
+});
 render();
 </script>
 </body>
