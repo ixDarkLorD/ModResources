@@ -50,18 +50,18 @@
   .empty { color: var(--faint); padding: 40px 0; text-align: center; }
 
   /* The builder, at the side, following the page. */
-  .builder { position: sticky; top: 73px; max-height: calc(100vh - 89px); overflow: auto; background: var(--panel); border: 1px solid var(--line);
-    border-radius: 16px; box-shadow: var(--shadow); }
-  @media (max-width: 1100px) { .builder { position: static; max-height: none; } }
-  .builder header { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+  .builder { position: sticky; top: 73px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 18px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+  @media (max-width: 1100px) { .builder { position: static; } }
+  .builder header { padding: 16px 18px 14px; border-bottom: 1px solid var(--line); }
   .builder header h2 { margin: 0; font-size: 17px; }
   .builder header p { margin: 4px 0 0; color: var(--faint); font-size: 12.5px; line-height: 1.45; }
-  .stage { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
-  .stage div { display: grid; place-items: center; min-height: 96px; padding: 14px; overflow: hidden; }
+  .stage { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 18px; }
+  .stage div { display: grid; place-items: center; min-height: 76px; padding: 12px; overflow: hidden; border-radius: 12px; border: 1px solid var(--line); }
   .stage .light { background: #f6f7fb; }
   .stage .dark { background: #0d1117; }
   .stage svg { max-width: 100%; height: auto; }
-  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 16px 18px; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px 18px; margin: 0 18px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); }
   .fields .full { grid-column: 1 / -1; }
   .fields > label { display: grid; gap: 5px; font-size: 12px; color: var(--muted); font-weight: 600; }
   .fields input[type=text], .fields input[type=url], .fields select { width: 100%; box-sizing: border-box; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: 13px var(--sans); }
@@ -75,14 +75,14 @@
   .paint input[type=color] { width: 100%; box-sizing: border-box; padding: 2px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
   .paint input[type=color].off { visibility: hidden; }
   .grad { display: flex; align-items: center; gap: 4px; font-weight: 500; white-space: nowrap; }
-  .out { padding: 0 18px 18px; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+  .out { display: grid; gap: 10px; padding: 0 18px; }
+  .tabs { display: flex; gap: 6px; }
   .tabs button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; padding: 5px 10px; font: 600 12px var(--sans); cursor: pointer; }
   .tabs button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
-  .where { font-size: 12px; color: var(--faint); margin: 0 0 8px; line-height: 1.4; }
+  .where { font-size: 12px; color: var(--faint); margin: 0; line-height: 1.4; }
   .where.custom { color: var(--accent-2); }
   .code { display: block; max-height: 120px; overflow: auto; white-space: pre-wrap; word-break: break-all; font: 11.5px/1.5 var(--mono); padding: 10px; border-radius: 10px; background: var(--code); border: 1px solid var(--line); color: var(--text); min-height: 18px; }
-  .acts { display: flex; gap: 8px; margin-top: 10px; }
+  .acts { display: flex; gap: 10px; margin-top: 2px; }
   .btn { flex: 1; border: 0; border-radius: 10px; padding: 9px 12px; font: 600 13px var(--sans); cursor: pointer; background: var(--accent); color: #fff; text-align: center; text-decoration: none; }
   .btn.ghost { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
   .btn[aria-disabled] { opacity: .5; pointer-events: none; }
