@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>net.ixdarklord.trophypedestals</groupId>
+  <artifactId>trophypedestals-neoforge</artifactId>
+  <version>0.1.0+1.21.1</version>
+  <name>Trophy Pedestals [neoforge]</name>
+  <description>Pedestals to show off what you've done: display pedestals for any item, mob trophies that keep the mob's look, player statues, and trophy cabinets and shelves.</description>
+  <url>https://github.com/ixDarkLorD/TrophyPedestals</url>
+  <licenses>
+    <license>
+      <name>MPL-2.0</name>
+      <url>https://spdx.org/licenses/MPL-2.0.html</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>ixdarklord</id>
+      <name>ixDarkLorD</name>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git://github.com/ixDarkLorD/TrophyPedestals.git</connection>
+    <developerConnection>scm:git:git@github.com:ixDarkLorD/TrophyPedestals.git</developerConnection>
+    <url>https://github.com/ixDarkLorD/TrophyPedestals</url>
+  </scm>
+  <issueManagement>
+    <system>github</system>
+    <url>https://github.com/ixDarkLorD/TrophyPedestals/issues</url>
+  </issueManagement>
+  <dependencies>
+    <dependency>
+      <groupId>net.ixdarklord.coolcatlib</groupId>
+      <artifactId>coolcatlib-neoforge</artifactId>
+      <version>8.2.0+1.21.1</version>
+      <scope>runtime</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
+</project>
