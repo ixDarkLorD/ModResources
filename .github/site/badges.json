@@ -1,6 +1,6 @@
 {
   "_about": "Badges the site keeps current (badges.py): each folder of badges/ that names its mod here gets downloads, version and Minecraft badges beside its static ones, and every badge is published in four styles (glass, flat, square, big). modid is the mod's file in updates/<loader>/; modrinth and curseforge are its project ids. Optional: label_color and value_color (\"#rrggbb\") for its badges' label and value grounds; without them, its static badge's colors. _worker_url is the badge service's address (worker/), for the builder's addresses of changed badges.",
-  "_worker_url": "",
+  "_worker_url": "https://modresources-badges.ixdarklord.workers.dev",
   "coolcatlib": {
     "modid": "coolcatlib",
     "modrinth": "ASkaoGC8",
