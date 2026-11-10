@@ -41,6 +41,9 @@ def icon(svg):
 VERSION_ICON = icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='#fff'><path d='M2 12.6V3.4C2 2.6 2.6 2 3.4 2h9.2c.4 0 .7.1 1 .4l8 8c.5.5.5 1.4 0 2l-9.2 9.2c-.6.5-1.5.5-2 0l-8-8c-.3-.3-.4-.6-.4-1zM7.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/></svg>")
 MINECRAFT_ICON = icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='#fff'><path d='M12 1.5 21.5 7v10L12 22.5 2.5 17V7L12 1.5zm0 2.3L5 7.9l7 4 7-4-7-4.1zM4.5 9.6v6.3l6.5 3.8v-6.3L4.5 9.6zm15 0L13 13.4v6.3l6.5-3.8V9.6z'/></svg>")
 DOWNLOADS_ICON = icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='#fff'><path d='M11 2h2v10.2l3.6-3.6 1.4 1.4-6 6-6-6 1.4-1.4 3.6 3.6V2zM3 15h2v4h14v-4h2v6H3v-6z'/></svg>")
+# Discord's logo, in white.
+DISCORD_ICON = icon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='#fff'><path d='M20.32 4.37a19.8 19.8 0 0 0-4.89-1.52.07.07 0 0 0-.08.04c-.21.38-.44.87-.61 1.25a18.27 18.27 0 0 0-5.49 0 12.64 12.64 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.74 19.74 0 0 0-4.89 1.52.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 6 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.3 1.23-1.99a.08.08 0 0 0-.04-.11 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.07 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13 12.3 12.3 0 0 1-1.87.89.08.08 0 0 0-.04.11c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.84 19.84 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.68-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.15-1.09-2.15-2.42s.95-2.42 2.15-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z'/></svg>")
+DISCORD_SERVER = 1173075408556654592     # CoolCat's Playground, the mods' community
 
 
 def look_of(svg):
@@ -69,6 +72,13 @@ def fetch(url):
 def modrinth_downloads(project):
     data = fetch(f'https://api.modrinth.com/v2/project/{project}') if project else None
     return data.get('downloads') or None if data else None
+
+
+def discord_online(server):
+    """How many members are online, from the server's public widget (as shields.io's badge reads it)."""
+    data = fetch(f'https://discord.com/api/guilds/{server}/widget.json')
+    online = (data or {}).get('presence_count')
+    return online if isinstance(online, int) else None
 
 
 def curseforge_downloads(project):
@@ -188,6 +198,11 @@ def build(out):
         where = os.path.join(BADGES, folder) if folder else BADGES
         return {name[:-4]: open(os.path.join(where, name), encoding='utf-8').read()
                 for name in sorted(os.listdir(where)) if name.endswith('.svg')}
+
+    # The community's Discord: how many are online, in Discord's own blurple.
+    online = discord_online(DISCORD_SERVER)
+    entry('', 'discord', True, 'Discord', f'{online} online' if online is not None else None, ('', '#5865F2', '#5865F2'), DISCORD_ICON)
+    print(f'badges/discord: {online} online')
 
     for folder in [''] + sorted(name for name in os.listdir(BADGES) if os.path.isdir(os.path.join(BADGES, name))):
         statics = statics_in(folder)
