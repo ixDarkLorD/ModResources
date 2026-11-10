@@ -210,7 +210,7 @@ def main():
             f.write(listing(folder))
     shutil.copy(os.path.join(HERE, 'site.css'), os.path.join(OUT, 'site.css'))
     shutil.copytree(os.path.join(HERE, 'logos'), os.path.join(OUT, 'logos'))
-    print(f'{badges.build(OUT)} live badges drawn')
+    print(f'{badges.build(OUT)} badges drawn')
     found = projects(artifacts())
     front = open(os.path.join(HERE, 'index.html'), encoding='utf-8').read()
     front = front.replace('{{URL}}', URL).replace('{{PROJECTS}}', json.dumps(found).replace('</', '<\\/'))

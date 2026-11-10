@@ -1,9 +1,32 @@
 {
-  "_about": "Badges the site keeps current (badges.py): each folder of badges/ that names its mod here gets downloads, version and Minecraft badges beside its static ones. modid is the mod's file in updates/<loader>/; modrinth and curseforge are its project ids.",
-  "coolcatlib": {"modid": "coolcatlib", "modrinth": "ASkaoGC8", "curseforge": 916525},
-  "folios": {"modid": "folios", "modrinth": "IjbhPhTO", "curseforge": 1757386},
-  "glazed-menu": {"modid": "glazedmenu", "modrinth": "jHNhGgr3", "curseforge": 1722133},
-  "wheredidiputit": {"modid": "wheredidiputit", "modrinth": "mWq0KQyW", "curseforge": 1757131},
-  "trophypedestals": {"modid": "trophypedestals", "modrinth": "7h4XmIig", "curseforge": 1787302},
-  "ftb-ultimine-addition": {"modid": "ultimine_addition", "curseforge": 733166}
+  "_about": "Badges the site keeps current (badges.py): each folder of badges/ that names its mod here gets downloads, version and Minecraft badges beside its static ones, and every badge is published in four styles (glass, flat, square, big). modid is the mod's file in updates/<loader>/; modrinth and curseforge are its project ids. Optional: label_color and value_color (\"#rrggbb\") for its badges' label and value grounds; without them, its static badge's colors.",
+  "coolcatlib": {
+    "modid": "coolcatlib",
+    "modrinth": "ASkaoGC8",
+    "curseforge": 916525
+  },
+  "folios": {
+    "modid": "folios",
+    "modrinth": "IjbhPhTO",
+    "curseforge": 1757386
+  },
+  "glazed-menu": {
+    "modid": "glazedmenu",
+    "modrinth": "jHNhGgr3",
+    "curseforge": 1722133
+  },
+  "wheredidiputit": {
+    "modid": "wheredidiputit",
+    "modrinth": "mWq0KQyW",
+    "curseforge": 1757131
+  },
+  "trophypedestals": {
+    "modid": "trophypedestals",
+    "modrinth": "7h4XmIig",
+    "curseforge": 1787302
+  },
+  "ftb-ultimine-addition": {
+    "modid": "ultimine_addition",
+    "curseforge": 733166
+  }
 }
