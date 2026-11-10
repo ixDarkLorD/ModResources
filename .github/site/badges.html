@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Badges · ModResources</title>
+<meta name="description" content="Badges for ixDarkLorD's mods, in each mod's colors and four styles: live downloads, newest version and Minecraft versions, kept current, and a builder for badge addresses of your own.">
+<link rel="stylesheet" href="../site.css">
+<script>try { const t = localStorage.getItem('mr-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<style>
+  .wide { max-width: 90rem; margin: 0 auto; padding: 0 20px; }
+  .b-hero { padding: 36px 0 18px; }
+  .b-hero h1 { margin: 0 0 8px; font-size: clamp(30px, 4vw, 42px); letter-spacing: -.02em; }
+  .b-hero p { margin: 0; max-width: 48rem; color: var(--muted); line-height: 1.55; }
+  .b-stats { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 16px; color: var(--faint); font-size: 13px; }
+  .b-stats b { color: var(--text); font-size: 18px; margin-right: 6px; }
+
+  .b-layout { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 28px; align-items: start; padding-bottom: 60px; }
+  @media (max-width: 1100px) { .b-layout { grid-template-columns: minmax(0, 1fr); } }
+
+  /* The tools above the gallery, kept in sight while scrolling. */
+  .b-tools { position: sticky; top: 57px; z-index: 5; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 12px 0;
+    background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  .seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); }
+  .seg button { border: 0; background: transparent; color: var(--muted); padding: 6px 12px; border-radius: 7px; font: 600 13px var(--sans); cursor: pointer; text-transform: capitalize; }
+  .seg button[aria-pressed="true"] { background: var(--panel); color: var(--text); box-shadow: var(--shadow); }
+  .b-search { flex: 1 1 200px; min-width: 160px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: 14px var(--sans); }
+  .b-check { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; cursor: pointer; }
+
+  /* A mod: a card of badge tiles. */
+  .mod { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+  .mod-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--panel-2); }
+  .mod-head .dot { width: 14px; height: 14px; border-radius: 4px; flex: none; }
+  .mod-head h2 { margin: 0; font-size: 16px; }
+  .mod-head span { margin-left: auto; color: var(--faint); font-size: 12px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; padding: 14px; }
+  .tile { position: relative; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); cursor: pointer; transition: border-color .15s, transform .15s; display: grid; }
+  .tile:hover { border-color: var(--line-2); transform: translateY(-1px); }
+  .tile[aria-selected="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .tile .pic { display: grid; place-items: center; min-height: 64px; padding: 12px; }
+  .tile .pic img { max-width: 100%; }
+  .tile .meta { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .tile .meta .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .live { display: inline-flex; align-items: center; gap: 5px; color: var(--ok); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent); }
+  .tile .quick { margin-left: auto; display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+  .tile:hover .quick, .tile:focus-within .quick { opacity: 1; }
+  .mini { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 6px; font: 600 10px var(--mono); padding: 3px 6px; cursor: pointer; }
+  .mini:hover { color: var(--text); border-color: var(--line-2); }
+  .empty { color: var(--faint); padding: 40px 0; text-align: center; }
+
+  /* The builder, at the side, following the page. */
+  .builder { position: sticky; top: 73px; max-height: calc(100vh - 89px); overflow: auto; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 16px; box-shadow: var(--shadow); }
+  @media (max-width: 1100px) { .builder { position: static; max-height: none; } }
+  .builder header { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+  .builder header h2 { margin: 0; font-size: 17px; }
+  .builder header p { margin: 4px 0 0; color: var(--faint); font-size: 12.5px; line-height: 1.45; }
+  .stage { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+  .stage div { display: grid; place-items: center; min-height: 96px; padding: 14px; overflow: hidden; }
+  .stage .light { background: #f6f7fb; }
+  .stage .dark { background: #0d1117; }
+  .stage svg { max-width: 100%; height: auto; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 16px 18px; }
+  .fields .full { grid-column: 1 / -1; }
+  .fields > label { display: grid; gap: 5px; font-size: 12px; color: var(--muted); font-weight: 600; }
+  .fields input[type=text], .fields input[type=url], .fields select { width: 100%; box-sizing: border-box; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: 13px var(--sans); }
+  .toggle { display: flex !important; grid-template-columns: none; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+  .range { display: flex; gap: 8px; align-items: center; }
+  .range input[type=range] { flex: 1; padding: 0; }
+  .range output { width: 42px; text-align: right; font: 12px var(--mono); color: var(--text); }
+  .paints { display: grid; gap: 8px; transition: opacity .15s; }
+  .paints.off { opacity: .45; }
+  .paint { display: grid; grid-template-columns: 52px 1fr 1fr auto; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); font-weight: 600; }
+  .paint input[type=color] { width: 100%; box-sizing: border-box; padding: 2px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  .paint input[type=color].off { visibility: hidden; }
+  .grad { display: flex; align-items: center; gap: 4px; font-weight: 500; white-space: nowrap; }
+  .out { padding: 0 18px 18px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+  .tabs button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; padding: 5px 10px; font: 600 12px var(--sans); cursor: pointer; }
+  .tabs button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+  .where { font-size: 12px; color: var(--faint); margin: 0 0 8px; line-height: 1.4; }
+  .where.custom { color: var(--accent-2); }
+  .code { display: block; max-height: 120px; overflow: auto; white-space: pre-wrap; word-break: break-all; font: 11.5px/1.5 var(--mono); padding: 10px; border-radius: 10px; background: var(--code); border: 1px solid var(--line); color: var(--text); min-height: 18px; }
+  .acts { display: flex; gap: 8px; margin-top: 10px; }
+  .btn { flex: 1; border: 0; border-radius: 10px; padding: 9px 12px; font: 600 13px var(--sans); cursor: pointer; background: var(--accent); color: #fff; text-align: center; text-decoration: none; }
+  .btn.ghost { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+  .btn[aria-disabled] { opacity: .5; pointer-events: none; }
+</style>
+</head>
+<body>
+<header class="bar"><div class="wide bar-in">
+  <a class="brand" href="../"><span class="mark" aria-hidden="true"></span>ModResources <span>Badges</span></a>
+  <nav><a href="../">Maven</a><a href="https://github.com/ixDarkLorD/ModResources">GitHub</a>
+    <button class="theme" type="button" aria-label="Switch between light and dark"></button></nav>
+</div></header>
+
+<main class="wide">
+  <section class="b-hero">
+    <h1>Badges</h1>
+    <p>Every mod's badges, in its own colors and in four styles. The live ones (downloads, newest version, Minecraft
+      versions) are drawn again every few hours from CurseForge, Modrinth and the update checks; a number that can't be had
+      yet is left off. Pick one to copy it, or change it in the builder for an address of your own.</p>
+    <div class="b-stats" id="stats"></div>
+  </section>
+
+  <div class="b-layout">
+    <div>
+      <div class="b-tools">
+        <div class="seg" id="styles" role="group" aria-label="Style"></div>
+        <input class="b-search" id="search" type="search" placeholder="Search badges and mods…" aria-label="Search">
+        <label class="b-check"><input type="checkbox" id="liveOnly"> Live only</label>
+      </div>
+      <div id="gallery"></div>
+    </div>
+
+    <aside class="builder" id="builder" aria-label="Builder">
+      <header><h2>Builder</h2><p>Change any badge's style, colors (gradients too), words and size, and get an address that's
+        ready to use. It's drawn as it's asked for, live numbers and all, so it keeps up like the rest.</p></header>
+      <div class="stage"><div class="light" id="pv-light"></div><div class="dark" id="pv-dark"></div></div>
+      <form class="fields" id="make" onsubmit="return false">
+        <label class="full">Badge<select id="b-from"></select></label>
+        <label>Style<select id="b-style"></select></label>
+        <label>Height<div class="range"><input id="b-height" type="range" min="14" max="64" step="1" value="26"><output id="b-height-out">26px</output></div></label>
+        <label>Label<input id="b-label" type="text"></label>
+        <label>Value<input id="b-value" type="text" placeholder="(none)"></label>
+        <label class="full toggle"><input type="checkbox" id="b-keep" checked> Keep the mod's colors</label>
+        <div class="full paints" id="paints">
+          <div class="paint" data-key="logo"><span>Icon</span><input type="color"><input type="color"><label class="grad"><input type="checkbox"> gradient</label></div>
+          <div class="paint" data-key="labelColor"><span>Label</span><input type="color"><input type="color"><label class="grad"><input type="checkbox"> gradient</label></div>
+          <div class="paint" data-key="color"><span>Value</span><input type="color"><input type="color"><label class="grad"><input type="checkbox"> gradient</label></div>
+        </div>
+      </form>
+      <div class="out">
+        <div class="tabs" id="tabs"></div>
+        <p class="where" id="where"></p>
+        <code class="code" id="code"></code>
+        <div class="acts"><button class="btn" type="button" id="copy">Copy</button><a class="btn ghost" id="open" target="_blank" rel="noopener">Open</a></div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script type="module">
+import { badge, LABEL, STYLES } from './badge.mjs';
+const SITE = '{{SITE}}';
+const WORKER = '{{WORKER}}'.replace(/\/$/, '');
+const $ = (id) => document.getElementById(id);
+const [entries, widths] = await Promise.all([fetch('data.json').then(r => r.json()), fetch('verdana.json').then(r => r.json()).then(j => j.widths)]);
+const pathOf = (folder, name, style) => [folder, style === 'glass' ? '' : style, name + '.svg'].filter(Boolean).join('/');
+const urlOf = (e, style) => SITE + pathOf(e.folder, e.name, style);
+const heightOf = (style) => style === 'big' ? 28 : 26;
+const store = { get: (k, d) => { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+function flash(button, text = 'Copied') { const t = button.textContent; button.textContent = text; setTimeout(() => button.textContent = t, 1100); }
+const copy = (text, button) => navigator.clipboard.writeText(text).then(() => flash(button));
+const hex = (c) => /^#[0-9a-f]{6}$/i.test(c || '') ? c : null;
+const stopsOf = (e) => [...(e.logoDefs || '').matchAll(/stop-color="(#[0-9a-fA-F]{6})"/g)].map(m => m[1]);
+const accentOf = (e) => stopsOf(e)[0] || hex(e.logoFill) || '#8c95a6';
+
+// The theme switch, as on the Maven's pages.
+document.querySelector('.theme')?.addEventListener('click', () => {
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const now = document.documentElement.dataset.theme || (dark ? 'dark' : 'light');
+  document.documentElement.dataset.theme = now === 'dark' ? 'light' : 'dark';
+  store.set('mr-theme', document.documentElement.dataset.theme);
+});
+
+// Numbers at the top.
+const mods = [...new Set(entries.filter(e => e.folder).map(e => e.folder))];
+$('stats').innerHTML = [[entries.length, 'badges'], [entries.filter(e => e.live).length, 'live'], [mods.length, 'mods'], [STYLES.length, 'styles']]
+  .map(([n, w]) => `<span><b>${n}</b>${w}</span>`).join('');
+
+// The gallery: a card a mod, a tile a badge.
+let style = store.get('mr-badge-style', 'glass');
+if (!STYLES.includes(style)) style = 'glass';
+$('styles').innerHTML = STYLES.map(s => `<button type="button" data-style="${s}">${s}</button>`).join('');
+const groups = new Map();
+for (const e of entries) { if (!groups.has(e.folder)) groups.set(e.folder, []); groups.get(e.folder).push(e); }
+const order = [...groups.keys()].sort((a, b) => (a === '') - (b === '') || a.localeCompare(b));
+$('gallery').innerHTML = order.map(folder => {
+  const list = groups.get(folder).sort((a, b) => b.live - a.live);
+  const live = list.filter(e => e.live).length;
+  return `<section class="mod" data-folder="${folder}"><div class="mod-head"><span class="dot" style="background:${accentOf(list[0])}"></span>`
+    + `<h2>${folder || 'Loaders and more'}</h2><span>${list.length} badges${live ? `, ${live} live` : ''}</span></div><div class="tiles">`
+    + list.map(e => `<div class="tile" tabindex="0" role="button" data-i="${entries.indexOf(e)}" aria-selected="false">`
+      + `<div class="pic"><img alt="${e.label}${e.value ? ': ' + e.value : ''}" loading="lazy"></div>`
+      + `<div class="meta">${e.live ? '<span class="live">live</span>' : ''}<span class="name">${e.name}</span>`
+      + `<span class="quick"><button class="mini" data-copy="md" type="button">MD</button><button class="mini" data-copy="html" type="button">HTML</button><button class="mini" data-copy="url" type="button">URL</button></span></div></div>`).join('')
+    + `</div></section>`;
+}).join('') + '<p class="empty" id="empty" hidden>No badge matches.</p>';
+
+function snippet(e, kind, st = style) {
+  const url = urlOf(e, st), alt = e.value ? `${e.label}: ${e.value}` : e.label;
+  return kind === 'url' ? url : kind === 'html' ? `<img src="${url}" alt="${alt}" height="${heightOf(st)}">` : `![${alt}](${url})`;
+}
+function showStyle() {
+  document.querySelectorAll('#styles button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.style === style)));
+  document.querySelectorAll('.tile').forEach(t => { const e = entries[t.dataset.i], img = t.querySelector('img'); img.src = pathOf(e.folder, e.name, style); img.height = heightOf(style); });
+}
+$('styles').addEventListener('click', (ev) => {
+  const b = ev.target.closest('button'); if (!b) return;
+  style = b.dataset.style; store.set('mr-badge-style', style); showStyle();
+  $('b-style').value = style; $('b-height').value = heightOf(style); render();
+});
+function filter() {
+  const q = $('search').value.trim().toLowerCase(), liveOnly = $('liveOnly').checked;
+  let shown = 0;
+  document.querySelectorAll('.mod').forEach(m => {
+    let any = 0;
+    m.querySelectorAll('.tile').forEach(t => {
+      const e = entries[t.dataset.i];
+      const ok = (!liveOnly || e.live) && (!q || `${e.folder} ${e.name} ${e.label} ${e.value ?? ''}`.toLowerCase().includes(q));
+      t.hidden = !ok; any += ok;
+    });
+    m.hidden = !any; shown += any;
+  });
+  $('empty').hidden = shown > 0;
+}
+$('search').addEventListener('input', filter);
+$('liveOnly').addEventListener('change', filter);
+$('gallery').addEventListener('click', (ev) => {
+  const t = ev.target.closest('.tile'); if (!t) return;
+  const e = entries[t.dataset.i], q = ev.target.closest('[data-copy]');
+  if (q) { copy(snippet(e, q.dataset.copy), q); return; }
+  pick(Number(t.dataset.i));
+});
+$('gallery').addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && ev.target.classList.contains('tile')) pick(Number(ev.target.dataset.i)); });
+
+// The builder: draws here with badge.mjs, as the badge service does, and makes the service's address for it.
+$('b-style').innerHTML = STYLES.map(s => `<option value="${s}">${s}</option>`).join('');
+entries.forEach((e, i) => $('b-from').add(new Option(`${e.folder || 'loaders'} / ${e.name}`, i)));
+let tab = store.get('mr-badge-tab', 'md');
+const TABS = [['md', 'Markdown'], ['html', 'HTML'], ['url', 'URL']];
+if (!TABS.some(([k]) => k === tab)) tab = 'md';
+$('tabs').innerHTML = TABS.map(([k, w]) => `<button type="button" data-tab="${k}">${w}</button>`).join('');
+$('tabs').addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; tab = b.dataset.tab; store.set('mr-badge-tab', tab); render(); });
+const paints = [...document.querySelectorAll('.paint')];
+function paintOf(row) {
+  const [a, b] = row.querySelectorAll('input[type=color]'), grad = row.querySelector('.grad input').checked;
+  b.classList.toggle('off', !grad);
+  return grad ? `${a.value.slice(1)},${b.value.slice(1)}` : a.value.slice(1);
+}
+function keepColors() {
+  const keep = $('b-keep').checked;
+  $('paints').classList.toggle('off', keep);
+  paints.forEach(r => r.querySelectorAll('input').forEach(x => x.disabled = keep));
+}
+function pick(i) {
+  document.querySelectorAll('.tile').forEach(t => t.setAttribute('aria-selected', String(Number(t.dataset.i) === i)));
+  const e = entries[i], first = accentOf(e), stops = stopsOf(e);
+  const start = { logo: [stops[0] || hex(e.logoFill) || first, stops[1] || stops[0] || first], labelColor: [hex(e.labelColor) || LABEL, hex(e.labelColor) || LABEL],
+                  color: [hex(e.valueColor) || first, hex(e.valueColor) || first] };
+  paints.forEach(row => {
+    const [a, b] = row.querySelectorAll('input[type=color]');
+    [a.value, b.value] = start[row.dataset.key];
+    row.querySelector('.grad input').checked = row.dataset.key === 'logo' && stops.length > 1;
+  });
+  $('b-from').value = i; $('b-style').value = style; $('b-height').value = heightOf(style);
+  $('b-label').value = e.label; $('b-value').value = e.value ?? '';
+  $('b-keep').checked = true; keepColors();
+  render();
+}
+function render() {
+  const e = entries[$('b-from').value], s = $('b-style').value, keep = $('b-keep').checked, h = Number($('b-height').value);
+  $('b-height-out').value = h + 'px';
+  const spec = { ...e, style: s, label: $('b-label').value, value: $('b-value').value || null, height: h };
+  const q = new URLSearchParams();
+  if (s !== 'glass') q.set('style', s);
+  if (spec.label !== e.label) q.set('label', spec.label);
+  if ((spec.value ?? '') !== (e.value ?? '')) q.set('value', spec.value ?? '');
+  const colors = Object.fromEntries(paints.map(row => [row.dataset.key, paintOf(row)]));
+  if (!keep) {
+    Object.assign(spec, { logoDefs: '', logoFill: colors.logo, labelColor: colors.labelColor, valueColor: colors.color });
+    for (const [k, v] of Object.entries(colors)) q.set(k, v);
+  }
+  if (h !== heightOf(s)) q.set('height', h);
+  const svg = badge(spec, widths);
+  $('pv-light').innerHTML = svg; $('pv-dark').innerHTML = svg;
+  const query = q.toString().replace(/%2C/gi, ',');
+  const path = (e.folder ? e.folder + '/' : '') + e.name + '.svg';
+  // Unchanged, the site's own file does; changed, the badge service draws it.
+  const url = !query || query === `height=${h}` ? urlOf(e, s) : WORKER ? `${WORKER}/${path}?${query}` : '';
+  const alt = spec.value ? `${spec.label}: ${spec.value}` : spec.label;
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tab === tab)));
+  $('where').className = 'where' + (url ? '' : ' custom');
+  $('where').textContent = !url ? 'The badge service isn’t set up yet, so changed badges have no address.'
+    : url.startsWith(SITE) ? (e.live ? 'The site’s own badge, kept current.' : 'The site’s own badge.') + (h !== heightOf(s) ? ` Shown ${h}px tall.` : '')
+    : e.live ? 'Drawn as it’s asked for, with the latest numbers.' : 'Drawn as it’s asked for.';
+  const sized = h !== heightOf(s) && url.startsWith(SITE);
+  $('code').textContent = !url ? '' : tab === 'url' ? url : tab === 'html' || sized ? `<img src="${url}" alt="${alt}" height="${h}">` : `![${alt}](${url})`;
+  $('open').href = url || '#';
+  if (url) $('open').removeAttribute('aria-disabled'); else $('open').setAttribute('aria-disabled', 'true');
+}
+$('copy').addEventListener('click', (ev) => { if ($('code').textContent) copy($('code').textContent, ev.target); });
+$('b-from').addEventListener('change', () => pick(Number($('b-from').value)));
+$('b-style').addEventListener('change', () => { $('b-height').value = heightOf($('b-style').value); render(); });
+$('b-keep').addEventListener('change', () => { keepColors(); render(); });
+$('make').addEventListener('input', (ev) => { if (ev.target.id !== 'b-from' && ev.target.id !== 'b-keep') render(); });
+
+showStyle();
+pick(Math.max(0, entries.findIndex(e => e.live)));
+</script>
+</body>
+</html>

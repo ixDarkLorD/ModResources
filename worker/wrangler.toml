@@ -1,0 +1,5 @@
+# The badge service (index.mjs), on Cloudflare Workers. Deploy from this folder: npx wrangler deploy
+name = "modresources-badges"
+main = "index.mjs"
+compatibility_date = "2026-11-01"
+workers_dev = true

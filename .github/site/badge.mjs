@@ -13,6 +13,14 @@ export const LABEL = '#3a3f58';
 
 const escape = (text) => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
 
+/** A color as SVG takes it: '#rgb'/'#rrggbb'(aa) with or without its '#', or a CSS color name; anything else is dropped
+    (a badge address can carry any text). */
+export function colorOf(text) {
+  const c = String(text ?? '').trim();
+  if (/^#?([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(c)) return c.startsWith('#') ? c : '#' + c;
+  return /^[a-z]{3,20}$/i.test(c) ? c.toLowerCase() : null;
+}
+
 /** How wide Verdana draws the text at 11 pixels, in tenths of a pixel, rounded as the badges have always been. */
 export function textWidth(text, widths) {
   let sum = 0;
@@ -32,11 +40,22 @@ export function badge(spec, widths) {
   const style = STYLES.includes(spec.style) ? spec.style : 'glass';
   const label = String(spec.label ?? '');
   const value = spec.value === undefined || spec.value === null || spec.value === '' ? null : String(spec.value);
-  const labelColor = spec.labelColor || LABEL;
-  const fill = spec.logoFill || labelColor;
-  const accent = spec.valueColor || fill;
+  // A color is one color or several, comma-separated, for a gradient from left to right ('f2c94c,9a6a1a').
+  const gradients = [];
+  const paint = (color, id) => {
+    if (!color) return null;
+    if (/^url\(#[\w-]+\)$/.test(color)) return color;
+    const stops = String(color).split(',').map(colorOf).filter(Boolean);
+    if (stops.length < 2) return stops[0] || null;
+    gradients.push(`<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0">`
+      + stops.map((c, i) => `<stop offset="${(i / (stops.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join('') + `</linearGradient>`);
+    return `url(#${id})`;
+  };
+  const labelColor = paint(spec.labelColor, 'gl') || LABEL;
+  const fill = paint(spec.logoFill, 'gi') || labelColor;
+  const accent = paint(spec.valueColor, 'gv') || fill;
   const title = value ? `${label}: ${value}` : label;
-  const defs = spec.logoDefs || '';
+  const defs = (spec.logoDefs || '') + gradients.join('');
   const image = spec.image ? `<image x="${style === 'big' ? 8 : 5}" y="${style === 'big' ? 6 : 3}" width="${style === 'big' ? 16 : 14}" height="${style === 'big' ? 16 : 14}" href="${spec.image}"/>` : '';
 
   if (style === 'big') {

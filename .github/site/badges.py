@@ -152,6 +152,23 @@ def path_of(folder, name, style):
     return '/'.join(parts + [name + '.svg'])
 
 
+def endpoint(e):
+    """A badge as a shields.io endpoint (https://shields.io/badges/endpoint-badge): its label, its value (or, a static
+    badge, its label as the message), its colors and its icon, for img.shields.io/endpoint?url=<this file>, where any
+    of shields.io's options (style, color, label, labelColor, logoColor...) can be added to the address."""
+    color = lambda c, default: (c if re.fullmatch(r'#[0-9a-fA-F]{6}', c or '') else default).lstrip('#')
+    label_color = color(e['labelColor'], '#3a3f58')
+    data = {'schemaVersion': 1, 'cacheSeconds': 3600}
+    if e['value']:
+        data.update(label=e['label'], message=e['value'], color=color(e['valueColor'], '#3a3f58'), labelColor=label_color)
+    else:
+        data.update(label='', message=e['label'], color=label_color)
+    image = e.get('image') or ''
+    if image.startswith('data:image/svg+xml;base64,'):
+        data['logoSvg'] = base64.b64decode(image.split(',', 1)[1]).decode('utf-8', 'replace')
+    return data
+
+
 def build(out):
     """Copies the static badges, draws the live ones and every badge's other styles, and writes the badges page and the
     builder's data. Returns how many badges it drew."""
@@ -201,6 +218,12 @@ def build(out):
         with open(path, 'w', encoding='utf-8') as f:
             f.write(svg)
 
+    # Every badge as a shields.io endpoint too, for addresses that take shields.io's options.
+    for e in entries:
+        path = os.path.join(target, *path_of(e['folder'], e['name'], 'glass')[:-4].split('/')) + '.json'
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(endpoint(e), f, separators=(',', ':'))
+
     # The builder draws in the browser with the same badge.mjs and widths.
     shutil.copy(os.path.join(HERE, 'badge.mjs'), os.path.join(target, 'badge.mjs'))
     shutil.copy(os.path.join(HERE, 'verdana.json'), os.path.join(target, 'verdana.json'))
@@ -212,156 +235,6 @@ def build(out):
 
 
 def page(entries):
-    """The badges page: a style switcher, each mod's badges (live ones first) with the Markdown to copy, and the builder."""
-    groups = {}
-    for e in entries:
-        groups.setdefault(e['folder'], []).append(e)
-    sections = []
-    for folder, items in sorted(groups.items(), key=lambda kv: (kv[0] == '', kv[0])):
-        rows = []
-        for e in sorted(items, key=lambda e: not e['live']):
-            rows.append(f'<li class="badge-row" data-folder="{folder}" data-name="{e["name"]}"><img alt="{html.escape(e["label"])}" height="26">'
-                        f'<span class="kind {"live" if e["live"] else "static"}">{"live" if e["live"] else "static"}</span>'
-                        f'<code></code><button class="copy" type="button">Copy</button></li>')
-        sections.append(f'<section class="badge-mod"><h2>{html.escape(folder or "Loaders and more")}</h2><ul>{"".join(rows)}</ul></section>')
-    options = ''.join(f'<option value="{s}">{s}</option>' for s in STYLES)
-    return f'''<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Badges · ModResources</title>
-<link rel="stylesheet" href="../site.css">
-<script>try {{ const t = localStorage.getItem('mr-theme'); if (t) document.documentElement.dataset.theme = t; }} catch (e) {{}}</script>
-<style>
-  .badge-mod {{ margin: 28px 0; }}
-  .badge-mod ul {{ list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }}
-  .badge-row {{ display: grid; grid-template-columns: 240px 52px 1fr auto; align-items: center; gap: 12px; }}
-  .badge-row img {{ justify-self: start; max-width: 240px; }}
-  .badge-row code {{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: .8; }}
-  .kind {{ font-size: 11px; text-transform: uppercase; letter-spacing: .5px; opacity: .7; }}
-  .kind.live {{ color: #5fd38d; opacity: 1; }}
-  .styles {{ display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0 6px; }}
-  .styles button, .builder button {{ cursor: pointer; }}
-  .styles button[aria-pressed="true"] {{ outline: 2px solid currentColor; }}
-  .builder {{ margin: 36px 0; padding: 20px; border: 1px solid rgba(127,127,127,.3); border-radius: 12px; }}
-  .builder form {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 16px; }}
-  .builder label {{ display: grid; gap: 4px; font-size: 13px; }}
-  .builder input, .builder select {{ width: 100%; box-sizing: border-box; font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(127,127,127,.4); background: transparent; color: inherit; }}
-  .builder input[type=color] {{ padding: 2px; height: 34px; }}
-  .preview {{ margin: 20px 0 12px; min-height: 40px; display: flex; align-items: center; }}
-  .out {{ display: grid; gap: 8px; }}
-  .out code {{ display: block; overflow-x: auto; white-space: nowrap; font-size: 12px; padding: 8px; border-radius: 6px; background: rgba(127,127,127,.12); }}
-  .actions {{ display: flex; gap: 8px; flex-wrap: wrap; }}
-  @media (max-width: 720px) {{ .badge-row {{ grid-template-columns: 1fr auto; }} .badge-row .kind, .badge-row code {{ display: none; }} }}
-</style>
-</head>
-<body>
-<header class="bar"><div class="wrap bar-in">
-  <a class="brand" href="../"><span class="mark" aria-hidden="true"></span>ModResources <span>Badges</span></a>
-  <nav><a href="#builder">Builder</a><a href="../">Maven</a><a href="https://github.com/ixDarkLorD/ModResources">GitHub</a></nav>
-</div></header>
-<main class="wrap">
-  <h1>Badges</h1>
-  <p>Each mod's badges, in its own colors and in four styles. The live ones (downloads, newest version, Minecraft versions)
-    are drawn again every few hours from CurseForge, Modrinth and this repository's update checks; a number that can't be
-    had yet is left off. For other colors, words or sizes, use the <a href="#builder">builder</a>.</p>
-  <div class="styles" role="group" aria-label="Style">{''.join(f'<button type="button" data-style="{s}">{s}</button>' for s in STYLES)}</div>
-  {"".join(sections)}
-
-  <section class="builder" id="builder">
-    <h2>Builder</h2>
-    <p>Start from any badge, then change its style, colors, words and size. A badge as the site has it gets its address;
-      one of your own is yours to copy or download.</p>
-    <form id="make">
-      <label>Badge<select id="b-from"></select></label>
-      <label>Style<select id="b-style">{options}</select></label>
-      <label>Height (px)<input id="b-height" type="number" min="12" max="96" step="1" value="26"></label>
-      <label>Label<input id="b-label" type="text"></label>
-      <label>Value<input id="b-value" type="text" placeholder="(none)"></label>
-      <label>Icon square<input id="b-logo" type="color"></label>
-      <label>Label color<input id="b-labelColor" type="color"></label>
-      <label>Value color<input id="b-valueColor" type="color"></label>
-      <label>Keep the mod's colors<select id="b-keep"><option value="yes">yes</option><option value="no">no, use mine</option></select></label>
-    </form>
-    <div class="preview" id="b-preview"></div>
-    <div class="out">
-      <span id="b-where"></span>
-      <code id="b-code"></code>
-      <div class="actions"><button type="button" id="b-copy">Copy</button><button type="button" id="b-svg">Copy SVG</button><button type="button" id="b-download">Download SVG</button></div>
-    </div>
-  </section>
-</main>
-<script type="module">
-import {{ badge, LABEL }} from './badge.mjs';
-const SITE = '{SITE}';
-const [entries, widths] = await Promise.all([fetch('data.json').then(r => r.json()), fetch('verdana.json').then(r => r.json()).then(j => j.widths)]);
-const pathOf = (folder, name, style) => [folder, style === 'glass' ? '' : style, name + '.svg'].filter(Boolean).join('/');
-const copy = (text, button) => navigator.clipboard.writeText(text).then(() => {{ const t = button.textContent; button.textContent = 'Copied'; setTimeout(() => button.textContent = t, 1200); }});
-
-// The list: each badge in the chosen style, with its Markdown.
-let style = 'glass';
-try {{ style = localStorage.getItem('mr-badge-style') || 'glass'; }} catch (e) {{}}
-function show() {{
-  document.querySelectorAll('.styles button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.style === style)));
-  document.querySelectorAll('.badge-row').forEach(row => {{
-    const path = pathOf(row.dataset.folder, row.dataset.name, style), md = `![${{row.dataset.name}}](${{SITE}}${{path}})`;
-    row.querySelector('img').src = path;
-    row.querySelector('img').height = style === 'big' ? 28 : 26;
-    row.querySelector('code').textContent = md;
-    row.querySelector('button').onclick = (event) => copy(md, event.target);
-  }});
-}}
-document.querySelectorAll('.styles button').forEach(b => b.addEventListener('click', () => {{
-  style = b.dataset.style;
-  try {{ localStorage.setItem('mr-badge-style', style); }} catch (e) {{}}
-  show();
-}}));
-show();
-
-// The builder.
-const $ = (id) => document.getElementById(id);
-const hex = (c) => /^#[0-9a-f]{{6}}$/i.test(c || '') ? c : null;
-entries.forEach((e, i) => $('b-from').add(new Option(`${{e.folder || 'loaders'}} / ${{e.name}}`, i)));
-function start() {{
-  const e = entries[$('b-from').value];
-  $('b-label').value = e.label; $('b-value').value = e.value ?? '';
-  $('b-logo').value = hex(e.logoFill) || (e.logoDefs.match(/stop-color="(#[0-9a-fA-F]{{6}})"/) || [, '#5b6fe0'])[1];
-  $('b-labelColor').value = hex(e.labelColor) || LABEL; $('b-valueColor').value = hex(e.valueColor) || '#9a6a1a';
-  $('b-keep').value = 'yes';
-  render();
-}}
-function render() {{
-  const e = entries[$('b-from').value], s = $('b-style').value, keep = $('b-keep').value === 'yes';
-  const spec = {{ ...e, style: s, label: $('b-label').value, value: $('b-value').value || null, height: Number($('b-height').value) || undefined }};
-  if (!keep) Object.assign(spec, {{ logoDefs: '', logoFill: $('b-logo').value, labelColor: $('b-labelColor').value, valueColor: $('b-valueColor').value }});
-  const svg = badge(spec, widths);
-  $('b-preview').innerHTML = svg;
-  const defaultHeight = s === 'big' ? 28 : 26;
-  const asPublished = keep && spec.label === e.label && (spec.value ?? null) === (e.value ?? null);
-  const url = SITE + pathOf(e.folder, e.name, s);
-  if (asPublished) {{
-    const h = Number($('b-height').value) || defaultHeight;
-    $('b-where').textContent = e.live ? 'Published (kept current):' : 'Published:';
-    $('b-code').textContent = h === defaultHeight ? `![${{spec.label}}](${{url}})` : `<img src="${{url}}" alt="${{spec.label}}" height="${{h}}">`;
-  }} else {{
-    $('b-where').textContent = 'Your own: download the SVG and keep it with your files (it isn’t on the site, so it isn’t kept current).';
-    $('b-code').textContent = svg;
-  }}
-  $('b-copy').onclick = (event) => copy($('b-code').textContent, event.target);
-  $('b-svg').onclick = (event) => copy(svg, event.target);
-  $('b-download').onclick = () => {{
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([svg], {{ type: 'image/svg+xml' }}));
-    a.download = `${{e.folder || 'badge'}}-${{e.name}}-${{s}}.svg`; a.click(); URL.revokeObjectURL(a.href);
-  }};
-}}
-$('b-from').addEventListener('change', start);
-$('b-style').addEventListener('change', () => {{ $('b-height').value = $('b-style').value === 'big' ? 28 : 26; }});
-$('make').addEventListener('input', render);
-$('make').addEventListener('change', render);
-start();
-</script>
-</body>
-</html>
-'''
+    """The badges page (badges.html): the gallery, drawn from data.json, and the builder."""
+    worker = json.load(open(os.path.join(HERE, 'badges.json'), encoding='utf-8')).get('_worker_url', '')
+    return open(os.path.join(HERE, 'badges.html'), encoding='utf-8').read().replace('{{SITE}}', SITE).replace('{{WORKER}}', worker)
