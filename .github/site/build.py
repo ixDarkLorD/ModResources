@@ -1,5 +1,6 @@
 """Builds the Maven's website for GitHub Pages: the maven/ folder as it is, a page listing every folder in it (Pages has
-no folder listings of its own), and a front page with the repository to add and each artifact's versions.
+no folder listings of its own), a front page with the repository to add and each artifact's versions, and the mods'
+badges, the live ones drawn again (badges.py).
 
 usage: python build.py <output folder>     (run from the repository's root)"""
 import html
@@ -10,6 +11,9 @@ import shutil
 import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import badges  # noqa: E402  (beside this file)
 
 ROOT = 'maven'
 OUT = sys.argv[1] if len(sys.argv) > 1 else '_site'
@@ -206,6 +210,7 @@ def main():
             f.write(listing(folder))
     shutil.copy(os.path.join(HERE, 'site.css'), os.path.join(OUT, 'site.css'))
     shutil.copytree(os.path.join(HERE, 'logos'), os.path.join(OUT, 'logos'))
+    print(f'{badges.build(OUT)} live badges drawn')
     found = projects(artifacts())
     front = open(os.path.join(HERE, 'index.html'), encoding='utf-8').read()
     front = front.replace('{{URL}}', URL).replace('{{PROJECTS}}', json.dumps(found).replace('</', '<\\/'))

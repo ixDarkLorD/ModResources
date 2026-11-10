@@ -1,11 +1,15 @@
 name: Maven site
 # Publishes the Maven on GitHub Pages at ixdarklord.github.io/ModResources: the maven/ folder, a page for every folder in
 # it, and a front page with the repository to add and each artifact's versions (.github/site/build.py). It runs on every
-# push that changes the Maven, so a release the mods' workflows publish is on the site a minute later.
+# push that changes the Maven, so a release the mods' workflows publish is on the site a minute later, and every six
+# hours for the badges (.github/site/badges.py).
 on:
   push:
     branches: [main]
-    paths: [maven/**, .github/site/**, .github/workflows/pages.yml]
+    paths: [maven/**, badges/**, updates/**, .github/site/**, .github/workflows/pages.yml]
+  # The live badges' numbers (downloads), drawn again every six hours.
+  schedule:
+    - cron: '23 */6 * * *'
   workflow_dispatch:
 
 permissions:
