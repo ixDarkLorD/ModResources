@@ -1,0 +1,9 @@
+{
+    "homepage": "https://modrinth.com/mod/where-did-i-put-it",
+    "promos": {
+        "1.21.1-latest": "1.2.0+1.21.1",
+        "1.21.1-recommended": "1.2.0+1.21.1",
+        "1.20.1-latest": "1.2.0+1.20.1",
+        "1.20.1-recommended": "1.2.0+1.20.1"
+    }
+}
